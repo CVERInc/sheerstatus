@@ -169,27 +169,16 @@ t() {
         pt-BR) echo "Capacidade" ;;
         *)     echo "Capacity" ;;
       esac ;;
-    tag_pass)
-      case "$SS_LANG" in
-        ja-JP) echo "[良好]" ;;
-        zh-TW|zh-Hans) echo "[正常]" ;;
-        ko-KR) echo "[정상]" ;;
-        *)     echo "[PASS]" ;;
-      esac ;;
-    tag_warn)
-      case "$SS_LANG" in
-        ja-JP) echo "[混雑]" ;;
-        zh-TW|zh-Hans) echo "[吃緊]" ;;
-        ko-KR) echo "[주의]" ;;
-        *)     echo "[WARN]" ;;
-      esac ;;
-    tag_crit)
-      case "$SS_LANG" in
-        ja-JP) echo "[不足]" ;;
-        zh-TW|zh-Hans) echo "[赤字]" ;;
-        ko-KR) echo "[경고]" ;;
-        *)     echo "[CRIT]" ;;
-      esac ;;
+    # Status badges are never localised and always eight columns wide — see
+    # signet/packages/cli/SPEC.md. Fixed width stops being a discipline and
+    # becomes a property; the padding is what keeps a badge from reading as a
+    # checkbox; and `grep WARN` works on a log pasted by someone in any language.
+    tag_pass)  echo "[ PASS ]" ;;
+    tag_warn)  echo "[ WARN ]" ;;
+    # TBD: CRIT has no home in the closed set yet (PASS DONE WARN FAIL HELD) —
+    # that set came from a tool that acts, and this one measures on a three-rung
+    # ladder. Padded here because the shape is decided; membership is not.
+    tag_crit)  echo "[ CRIT ]" ;;
     name_memory)
       case "$SS_LANG" in
         ja-JP) echo "メモリ" ;;
