@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# sheerstatus — the Mac hardware & pre-upgrade auditor you can read.
-# Open source · zero daemons · hard-data verdict · single-file Bash.
+# sheerstatus — the zero-daemon hardware & pre-upgrade auditor you can read.
+# Open source · macOS & Linux · hard-data verdict · single-file Bash.
 # https://oss.cver.net/sheerstatus  ·  MIT © CVER Inc.
 #
 # Usage:
@@ -11,7 +11,7 @@
 #
 set -u
 
-VERSION="0.4.0"
+VERSION="0.5.0"
 
 # ============================================================================
 # i18n — en-US · ja-JP · zh-TW · zh-Hans · ko-KR · es-ES · de-DE · fr-FR · pt-BR.
@@ -19,7 +19,11 @@ VERSION="0.4.0"
 # ============================================================================
 ss_resolve_lang() {
   local l="${SHEERSTATUS_LANG:-${LANG:-}}"
-  [ -z "$l" ] && l="$(defaults read -g AppleLocale 2>/dev/null || true)"
+  if [ -z "$l" ]; then
+    if command -v defaults >/dev/null 2>&1; then
+      l="$(defaults read -g AppleLocale 2>/dev/null || true)"
+    fi
+  fi
   case "$l" in
     ja*|*ja_JP*|*ja-JP*)                        echo "ja-JP" ;;
     *zh*Hant*|*zh_TW*|*zh-TW*|*zh_HK*|*zh-HK*)  echo "zh-TW" ;;
@@ -39,15 +43,15 @@ t() {
   case "$1" in
     banner_title)
       case "$SS_LANG" in
-        ja-JP) echo "sheerstatus v${VERSION} — Mac ハードウェア＆買替診断" ;;
-        zh-TW) echo "sheerstatus v${VERSION} —— Mac 硬體健康與換機診斷" ;;
-        zh-Hans) echo "sheerstatus v${VERSION} —— Mac 硬件健康与换机诊断" ;;
-        ko-KR) echo "sheerstatus v${VERSION} — Mac 하드웨어 및 교체 진단" ;;
-        es-ES) echo "sheerstatus v${VERSION} — Auditoría de hardware y actualización de Mac" ;;
-        de-DE) echo "sheerstatus v${VERSION} — Mac Hardware- & Aufrüstungsdiagnose" ;;
-        fr-FR) echo "sheerstatus v${VERSION} — Diagnostic matériel et de mise à niveau Mac" ;;
-        pt-BR) echo "sheerstatus v${VERSION} — Auditoria de hardware e substituição de Mac" ;;
-        *)     echo "sheerstatus v${VERSION} — Mac Hardware & Pre-Upgrade Auditor" ;;
+        ja-JP) echo "sheerstatus v${VERSION} — ハードウェア＆買替診断" ;;
+        zh-TW) echo "sheerstatus v${VERSION} —— 硬體健康與換機診斷" ;;
+        zh-Hans) echo "sheerstatus v${VERSION} —— 硬件健康与换机诊断" ;;
+        ko-KR) echo "sheerstatus v${VERSION} — 하드웨어 및 교체 진단" ;;
+        es-ES) echo "sheerstatus v${VERSION} — Auditoría de hardware y actualización" ;;
+        de-DE) echo "sheerstatus v${VERSION} — Hardware- & Aufrüstungsdiagnose" ;;
+        fr-FR) echo "sheerstatus v${VERSION} — Diagnostic matériel et de mise à niveau" ;;
+        pt-BR) echo "sheerstatus v${VERSION} — Auditoria de hardware e substituição" ;;
+        *)     echo "sheerstatus v${VERSION} — Hardware & Pre-Upgrade Auditor" ;;
       esac ;;
     sec_header)
       case "$SS_LANG" in
@@ -260,57 +264,89 @@ pad_row() {
   esac
 }
 
-# --- Gather Metrics ---
+# --- Cross-Platform Metrics (macOS + Linux) ---
 
 get_chip_name() {
-  sysctl -n machdep.cpu.brand_string 2>/dev/null || sysctl -n hw.model 2>/dev/null || echo "Apple Silicon"
+  if [ "$(uname)" = "Darwin" ]; then
+    sysctl -n machdep.cpu.brand_string 2>/dev/null || sysctl -n hw.model 2>/dev/null || echo "Apple Silicon"
+  else
+    grep -m1 "model name" /proc/cpuinfo 2>/dev/null | cut -d: -f2 | sed 's/^\s*//' || echo "x86_64 Processor"
+  fi
 }
 
 get_ram_gb() {
-  local bytes gb
-  bytes="$(sysctl -n hw.memsize 2>/dev/null || echo 0)"
-  gb=$(( bytes / 1073741824 ))
-  echo "${gb} GB"
+  if [ "$(uname)" = "Darwin" ]; then
+    local bytes gb
+    bytes="$(sysctl -n hw.memsize 2>/dev/null || echo 0)"
+    gb=$(( bytes / 1073741824 ))
+    echo "${gb} GB"
+  else
+    local kb gb
+    kb="$(awk '/MemTotal:/ {print $2}' /proc/meminfo 2>/dev/null || echo 0)"
+    gb=$(( kb / 1048576 ))
+    echo "${gb} GB"
+  fi
 }
 
 get_ssd_size() {
+  local mount_path="/"
+  [ "$(uname)" = "Darwin" ] && mount_path="/System/Volumes/Data"
+
   local raw_df
-  raw_df="$(df -h /System/Volumes/Data 2>/dev/null | awk 'NR==2 {print $2}')"
+  raw_df="$(df -h "$mount_path" 2>/dev/null | awk 'NR==2 {print $2}')"
   case "$raw_df" in
-    *Gi|*G) echo "${raw_df%Gi} GB SSD" ;;
-    *Ti|*T) echo "${raw_df%Ti} TB SSD" ;;
-    *) echo "${raw_df} SSD" ;;
+    *Gi|*G) echo "${raw_df%Gi} GB Disk" ;;
+    *Ti|*T) echo "${raw_df%Ti} TB Disk" ;;
+    *) echo "${raw_df} Disk" ;;
   esac
 }
 
 get_swap_formatted() {
-  local swap_line used_mb total_mb used_gb total_gb
-  swap_line="$(sysctl -n vm.swapusage 2>/dev/null || echo "")"
-  if [ -z "$swap_line" ]; then
-    echo "N/A"
-    return
-  fi
+  if [ "$(uname)" = "Darwin" ]; then
+    local swap_line used_mb total_mb used_gb total_gb
+    swap_line="$(sysctl -n vm.swapusage 2>/dev/null || echo "")"
+    if [ -z "$swap_line" ]; then
+      echo "N/A"
+      return
+    fi
+    used_mb="$(echo "$swap_line" | awk '{for(i=1;i<=NF;i++) if($i=="used") print $(i+2)}' | tr -d 'M' | cut -d. -f1)"
+    total_mb="$(echo "$swap_line" | awk '{for(i=1;i<=NF;i++) if($i=="total") print $(i+2)}' | tr -d 'M' | cut -d. -f1)"
 
-  used_mb="$(echo "$swap_line" | awk '{for(i=1;i<=NF;i++) if($i=="used") print $(i+2)}' | tr -d 'M' | cut -d. -f1)"
-  total_mb="$(echo "$swap_line" | awk '{for(i=1;i<=NF;i++) if($i=="total") print $(i+2)}' | tr -d 'M' | cut -d. -f1)"
+    [ -z "$used_mb" ] && used_mb=0
+    [ -z "$total_mb" ] && total_mb=0
 
-  [ -z "$used_mb" ] && used_mb=0
-  [ -z "$total_mb" ] && total_mb=0
-
-  if [ "$used_mb" -eq 0 ]; then
-    echo "0 B"
+    if [ "$used_mb" -eq 0 ]; then
+      echo "0 B"
+    else
+      used_gb="$(awk "BEGIN {printf \"%.2f\", $used_mb/1024}")"
+      total_gb="$(awk "BEGIN {printf \"%.2f\", $total_mb/1024}")"
+      echo "${used_gb} / ${total_gb} GB"
+    fi
   else
-    used_gb="$(awk "BEGIN {printf \"%.2f\", $used_mb/1024}")"
-    total_gb="$(awk "BEGIN {printf \"%.2f\", $total_mb/1024}")"
-    echo "${used_gb} / ${total_gb} GB"
+    local st_kb sf_kb su_kb used_gb total_gb
+    st_kb="$(awk '/SwapTotal:/ {print $2}' /proc/meminfo 2>/dev/null || echo 0)"
+    sf_kb="$(awk '/SwapFree:/ {print $2}' /proc/meminfo 2>/dev/null || echo 0)"
+    su_kb=$(( st_kb - sf_kb ))
+    [ "$su_kb" -lt 0 ] && su_kb=0
+
+    if [ "$su_kb" -eq 0 ]; then
+      echo "0 B"
+    else
+      used_gb="$(awk "BEGIN {printf \"%.2f\", $su_kb/1048576}")"
+      total_gb="$(awk "BEGIN {printf \"%.2f\", $st_kb/1048576}")"
+      echo "${used_gb} / ${total_gb} GB"
+    fi
   fi
 }
 
 get_disk_formatted() {
+  local mount_path="/"
+  [ "$(uname)" = "Darwin" ] && mount_path="/System/Volumes/Data"
+
   local used_df total_df pct
-  used_df="$(df -h /System/Volumes/Data 2>/dev/null | awk 'NR==2 {print $3}')"
-  total_df="$(df -h /System/Volumes/Data 2>/dev/null | awk 'NR==2 {print $2}')"
-  pct="$(df -h /System/Volumes/Data 2>/dev/null | awk 'NR==2 {print $5}')"
+  used_df="$(df -h "$mount_path" 2>/dev/null | awk 'NR==2 {print $3}')"
+  total_df="$(df -h "$mount_path" 2>/dev/null | awk 'NR==2 {print $2}')"
+  pct="$(df -h "$mount_path" 2>/dev/null | awk 'NR==2 {print $5}')"
 
   used_df="${used_df%Gi}"
   used_df="${used_df%G}"
@@ -321,52 +357,80 @@ get_disk_formatted() {
 }
 
 get_disk_pct_num() {
-  df -h /System/Volumes/Data 2>/dev/null | awk 'NR==2 {print $5}' | tr -d '%' | cut -d. -f1
+  local mount_path="/"
+  [ "$(uname)" = "Darwin" ] && mount_path="/System/Volumes/Data"
+  df -h "$mount_path" 2>/dev/null | awk 'NR==2 {print $5}' | tr -d '%' | cut -d. -f1
 }
 
 get_temp_live() {
-  local raw
-  raw="$(ioreg -rn AppleSmartBattery 2>/dev/null | awk -F'= ' '/"Temperature" =/ {print $2}' | head -n1)"
-  if [ -n "$raw" ]; then
-    awk "BEGIN {printf \"%.1f\", $raw/100}"
+  if [ "$(uname)" = "Darwin" ]; then
+    local raw
+    raw="$(ioreg -rn AppleSmartBattery 2>/dev/null | awk -F'= ' '/"Temperature" =/ {print $2}' | head -n1)"
+    if [ -n "$raw" ]; then
+      awk "BEGIN {printf \"%.1f\", $raw/100}"
+    else
+      echo "N/A"
+    fi
   else
-    echo "N/A"
+    if [ -f /sys/class/thermal/thermal_zone0/temp ]; then
+      local raw
+      raw="$(cat /sys/class/thermal/thermal_zone0/temp 2>/dev/null || echo 0)"
+      awk "BEGIN {printf \"%.1f\", $raw/1000}"
+    else
+      echo "N/A"
+    fi
   fi
 }
 
 get_temp_max() {
-  local raw
-  raw="$(ioreg -rn AppleSmartBattery 2>/dev/null | grep -o '"MaximumTemperature"=[0-9]*' | cut -d= -f2 | head -n1 || true)"
-  if [ -n "$raw" ]; then
-    echo "${raw} °C"
+  if [ "$(uname)" = "Darwin" ]; then
+    local raw
+    raw="$(ioreg -rn AppleSmartBattery 2>/dev/null | grep -o '"MaximumTemperature"=[0-9]*' | cut -d= -f2 | head -n1 || true)"
+    if [ -n "$raw" ]; then
+      echo "${raw} °C"
+    else
+      echo "N/A"
+    fi
   else
     echo "N/A"
   fi
 }
 
 get_temp_avg() {
-  local raw
-  raw="$(ioreg -rn AppleSmartBattery 2>/dev/null | grep -o '"AverageTemperature"=[0-9]*' | cut -d= -f2 | head -n1 || true)"
-  if [ -n "$raw" ]; then
-    awk "BEGIN {printf \"%.1f\", $raw/10}"
+  if [ "$(uname)" = "Darwin" ]; then
+    local raw
+    raw="$(ioreg -rn AppleSmartBattery 2>/dev/null | grep -o '"AverageTemperature"=[0-9]*' | cut -d= -f2 | head -n1 || true)"
+    if [ -n "$raw" ]; then
+      awk "BEGIN {printf \"%.1f\", $raw/10}"
+    else
+      echo "N/A"
+    fi
   else
     echo "N/A"
   fi
 }
 
 get_battery_pct() {
-  local raw_max max_cap design_cap
-  raw_max="$(ioreg -rn AppleSmartBattery 2>/dev/null | grep -o '"AppleRawMaxCapacity"=[0-9]*' | cut -d= -f2 | head -n1 || true)"
-  design_cap="$(ioreg -rn AppleSmartBattery 2>/dev/null | grep -o '"DesignCapacity"=[0-9]*' | cut -d= -f2 | head -n1 || true)"
-  
-  if [ -n "$raw_max" ] && [ -n "$design_cap" ] && [ "$design_cap" -gt 0 ]; then
-    local pct=$(( raw_max * 100 / design_cap ))
-    [ "$pct" -gt 100 ] && pct=100
-    echo "${pct}%"
+  if [ "$(uname)" = "Darwin" ]; then
+    local raw_max max_cap design_cap
+    raw_max="$(ioreg -rn AppleSmartBattery 2>/dev/null | grep -o '"AppleRawMaxCapacity"=[0-9]*' | cut -d= -f2 | head -n1 || true)"
+    design_cap="$(ioreg -rn AppleSmartBattery 2>/dev/null | grep -o '"DesignCapacity"=[0-9]*' | cut -d= -f2 | head -n1 || true)"
+    
+    if [ -n "$raw_max" ] && [ -n "$design_cap" ] && [ "$design_cap" -gt 0 ]; then
+      local pct=$(( raw_max * 100 / design_cap ))
+      [ "$pct" -gt 100 ] && pct=100
+      echo "${pct}%"
+    else
+      max_cap="$(ioreg -rn AppleSmartBattery 2>/dev/null | grep -o '"MaxCapacity"=[0-9]*' | cut -d= -f2 | head -n1 || true)"
+      if [ -n "$max_cap" ]; then
+        echo "${max_cap}%"
+      else
+        echo "N/A"
+      fi
+    fi
   else
-    max_cap="$(ioreg -rn AppleSmartBattery 2>/dev/null | grep -o '"MaxCapacity"=[0-9]*' | cut -d= -f2 | head -n1 || true)"
-    if [ -n "$max_cap" ]; then
-      echo "${max_cap}%"
+    if [ -f /sys/class/power_supply/BAT0/capacity ]; then
+      cat /sys/class/power_supply/BAT0/capacity 2>/dev/null | awk '{print $1"%"}'
     else
       echo "N/A"
     fi
@@ -378,21 +442,48 @@ get_battery_pct_num() {
 }
 
 get_battery_cycles() {
-  local cycle_cnt
-  cycle_cnt="$(ioreg -rn AppleSmartBattery 2>/dev/null | grep -o '"CycleCount"=[0-9]*' | cut -d= -f2 | head -n1 || true)"
-  if [ -n "$cycle_cnt" ]; then
-    case "$SS_LANG" in
-      zh-TW|zh-Hans) echo "${cycle_cnt} 次" ;;
-      ja-JP) echo "${cycle_cnt} 回" ;;
-      *) echo "${cycle_cnt}" ;;
-    esac
+  if [ "$(uname)" = "Darwin" ]; then
+    local cycle_cnt
+    cycle_cnt="$(ioreg -rn AppleSmartBattery 2>/dev/null | grep -o '"CycleCount"=[0-9]*' | cut -d= -f2 | head -n1 || true)"
+    if [ -n "$cycle_cnt" ]; then
+      case "$SS_LANG" in
+        zh-TW|zh-Hans) echo "${cycle_cnt} 次" ;;
+        ja-JP) echo "${cycle_cnt} 回" ;;
+        *) echo "${cycle_cnt}" ;;
+      esac
+    else
+      echo "N/A"
+    fi
   else
-    echo "N/A"
+    if [ -f /sys/class/power_supply/BAT0/cycle_count ]; then
+      local cycle_cnt
+      cycle_cnt="$(cat /sys/class/power_supply/BAT0/cycle_count 2>/dev/null || echo "")"
+      if [ -n "$cycle_cnt" ]; then
+        case "$SS_LANG" in
+          zh-TW|zh-Hans) echo "${cycle_cnt} 次" ;;
+          ja-JP) echo "${cycle_cnt} 回" ;;
+          *) echo "${cycle_cnt}" ;;
+        esac
+      else
+        echo "N/A"
+      fi
+    else
+      echo "N/A"
+    fi
   fi
 }
 
 get_swap_used_mb() {
-  sysctl -n vm.swapusage 2>/dev/null | awk '{for(i=1;i<=NF;i++) if($i=="used") print $(i+2)}' | tr -d 'M' | cut -d. -f1
+  if [ "$(uname)" = "Darwin" ]; then
+    sysctl -n vm.swapusage 2>/dev/null | awk '{for(i=1;i<=NF;i++) if($i=="used") print $(i+2)}' | tr -d 'M' | cut -d. -f1
+  else
+    local st_kb sf_kb su_kb
+    st_kb="$(awk '/SwapTotal:/ {print $2}' /proc/meminfo 2>/dev/null || echo 0)"
+    sf_kb="$(awk '/SwapFree:/ {print $2}' /proc/meminfo 2>/dev/null || echo 0)"
+    su_kb=$(( st_kb - sf_kb ))
+    [ "$su_kb" -lt 0 ] && su_kb=0
+    echo $(( su_kb / 1024 ))
+  fi
 }
 
 # --- Audit Verdict Builder ---
@@ -512,7 +603,7 @@ build_consolidated_recommendation() {
   else
     case "$SS_LANG" in
       zh-TW|zh-Hans)
-        local rec="建議：若常態感覺延遲，下一台 Mac 建議選購"
+        local rec="建議：若常態感覺延遲，下一台電腦建議選購"
         if [ "$need_ram" -eq 1 ] && [ "$need_ssd" -eq 1 ]; then
           rec="${rec}更高記憶體與儲存容量。"
         elif [ "$need_ram" -eq 1 ]; then
@@ -520,7 +611,7 @@ build_consolidated_recommendation() {
         elif [ "$need_ssd" -eq 1 ]; then
           rec="${rec}更高的儲存容量。"
         elif [ "$need_bat" -eq 1 ]; then
-          rec="建議：更換電池或規劃更換新 Mac。"
+          rec="建議：更換電池或規劃更換新電腦。"
         fi
         echo "$rec"
         ;;
@@ -533,20 +624,20 @@ build_consolidated_recommendation() {
         elif [ "$need_ssd" -eq 1 ]; then
           rec="${rec}上位のストレージ容量を推奨します。"
         elif [ "$need_bat" -eq 1 ]; then
-          rec="推奨：バッテリー交換または新しい Mac への買い替えを検討してください。"
+          rec="推奨：バッテリー交換または新しい PC への買い替えを検討してください。"
         fi
         echo "$rec"
         ;;
       *)
         local rec="Recommendation: If lag persists, consider opting for "
         if [ "$need_ram" -eq 1 ] && [ "$need_ssd" -eq 1 ]; then
-          rec="${rec}a higher RAM tier and larger storage on your next Mac."
+          rec="${rec}a higher RAM tier and larger storage on your next machine."
         elif [ "$need_ram" -eq 1 ]; then
-          rec="${rec}a higher RAM tier on your next Mac."
+          rec="${rec}a higher RAM tier on your next machine."
         elif [ "$need_ssd" -eq 1 ]; then
-          rec="${rec}larger storage on your next Mac."
+          rec="${rec}larger storage on your next machine."
         elif [ "$need_bat" -eq 1 ]; then
-          rec="Recommendation: Consider replacing the battery or upgrading to a new Mac."
+          rec="Recommendation: Consider replacing the battery or upgrading to a new machine."
         fi
         echo "$rec"
         ;;
@@ -589,7 +680,11 @@ run_audit() {
     echo ""
     t sec_battery
     pad_row "$(t label_temp_live)" "${temp_live} °C"
-    pad_row "$(t label_temp_avg)" "${temp_avg} °C"
+    if [ "$temp_avg" != "N/A" ]; then
+      pad_row "$(t label_temp_avg)" "${temp_avg} °C"
+    else
+      pad_row "$(t label_temp_avg)" "N/A"
+    fi
     pad_row "$(t label_temp_max)" "${temp_max}"
     pad_row "$(t label_battery_health)" "${bat_pct}"
     pad_row "$(t label_cycles)" "${bat_cycles}"
@@ -621,6 +716,7 @@ run_json() {
   cat <<EOF
 {
   "version": "${VERSION}",
+  "os": "$(uname)",
   "chip": "${chip}",
   "ram": "${ram}",
   "ssd": "${ssd}",
@@ -643,7 +739,7 @@ case "${1:-}" in
     echo "sheerstatus v${VERSION}"
     ;;
   --help|-h)
-    echo "sheerstatus — the Mac hardware & pre-upgrade auditor you can read."
+    echo "sheerstatus — the zero-daemon hardware & pre-upgrade auditor you can read."
     echo ""
     echo "Usage:"
     echo "  sheerstatus              Print hardware health & audit verdict"
