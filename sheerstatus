@@ -107,10 +107,10 @@ t() {
         zh-TW) echo "裁決報告（Verdict）" ;;
         zh-Hans) echo "裁决报告（Verdict）" ;;
         ko-KR) echo "진단 보고서 (Verdict)" ;;
-        es-ES) echo "Veredicto del diagnóstico" ;;
-        de-DE) echo "Diagnose-Urteil" ;;
-        fr-FR) echo "Verdict du diagnostic" ;;
-        pt-BR) echo "Veredito do diagnóstico" ;;
+        es-ES) echo "Veredicto del diagnóstico (Verdict)" ;;
+        de-DE) echo "Diagnose-Urteil (Verdict)" ;;
+        fr-FR) echo "Verdict du diagnostic (Verdict)" ;;
+        pt-BR) echo "Veredito do diagnóstico (Verdict)" ;;
         *)     echo "Audit Verdict" ;;
       esac ;;
     label_swap)
