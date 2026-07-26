@@ -11,7 +11,7 @@
 #
 set -u
 
-VERSION="0.3.0"
+VERSION="0.4.0"
 
 # ============================================================================
 # i18n — en-US · ja-JP · zh-TW · zh-Hans · ko-KR · es-ES · de-DE · fr-FR · pt-BR.
@@ -63,27 +63,39 @@ t() {
       esac ;;
     sec_memory)
       case "$SS_LANG" in
-        ja-JP) echo "メモリ＆ Swap 現況" ;;
-        zh-TW) echo "記憶體與 Swap 現況" ;;
-        zh-Hans) echo "内存与 Swap 现况" ;;
-        ko-KR) echo "메모리 및 Swap 현황" ;;
-        es-ES) echo "Memoria y presión de Swap" ;;
-        de-DE) echo "Arbeitsspeicher- & Swap-Druck" ;;
-        fr-FR) echo "Mémoire et pression du Swap" ;;
-        pt-BR) echo "Memória e pressão de Swap" ;;
-        *)     echo "Memory & Swap Pressure" ;;
+        ja-JP) echo "メモリ＆ Swap" ;;
+        zh-TW) echo "記憶體與 Swap" ;;
+        zh-Hans) echo "内存与 Swap" ;;
+        ko-KR) echo "메모리 및 Swap" ;;
+        es-ES) echo "Memoria y Swap" ;;
+        de-DE) echo "Arbeitsspeicher & Swap" ;;
+        fr-FR) echo "Mémoire et Swap" ;;
+        pt-BR) echo "Memória e Swap" ;;
+        *)     echo "Memory & Swap" ;;
       esac ;;
-    sec_thermal)
+    sec_storage)
       case "$SS_LANG" in
-        ja-JP) echo "温度＆バッテリーヘルス" ;;
-        zh-TW) echo "溫度與電池健康度" ;;
-        zh-Hans) echo "温度与电池健康度" ;;
-        ko-KR) echo "온도 및 배터리 건강 상태" ;;
-        es-ES) echo "Salud térmica y de batería" ;;
-        de-DE) echo "Thermo- & Akku-Gesundheit" ;;
-        fr-FR) echo "Santé thermique et de la batterie" ;;
-        pt-BR) echo "Saúde térmica e da bateria" ;;
-        *)     echo "Thermal & Battery Health" ;;
+        ja-JP) echo "ストレージ" ;;
+        zh-TW) echo "儲存空間" ;;
+        zh-Hans) echo "存储空间" ;;
+        ko-KR) echo "저장 공간" ;;
+        es-ES) echo "Almacenamiento" ;;
+        de-DE) echo "Speicher" ;;
+        fr-FR) echo "Stockage" ;;
+        pt-BR) echo "Armazenamento" ;;
+        *)     echo "Storage" ;;
+      esac ;;
+    sec_battery)
+      case "$SS_LANG" in
+        ja-JP) echo "バッテリー状態" ;;
+        zh-TW) echo "電池狀態" ;;
+        zh-Hans) echo "电池状态" ;;
+        ko-KR) echo "배터리 상태" ;;
+        es-ES) echo "Estado de la batería" ;;
+        de-DE) echo "Akku-Status" ;;
+        fr-FR) echo "État de la batterie" ;;
+        pt-BR) echo "Estado da bateria" ;;
+        *)     echo "Battery Status" ;;
       esac ;;
     verdict_title)
       case "$SS_LANG" in
@@ -99,126 +111,152 @@ t() {
       esac ;;
     label_swap)
       case "$SS_LANG" in
-        ja-JP) echo "Swap ステータス" ;;
-        zh-TW) echo "Swap 狀態" ;;
-        zh-Hans) echo "Swap 状态" ;;
-        ko-KR) echo "Swap 상태" ;;
-        es-ES) echo "Estado de Swap" ;;
-        de-DE) echo "Swap-Status" ;;
-        fr-FR) echo "État du Swap" ;;
-        pt-BR) echo "Estado do Swap" ;;
-        *)     echo "Swap Status" ;;
+        ja-JP) echo "Swap 使用量" ;;
+        zh-TW) echo "Swap 已使用量" ;;
+        zh-Hans) echo "Swap 已使用量" ;;
+        ko-KR) echo "Swap 사용량" ;;
+        es-ES) echo "Swap usado" ;;
+        de-DE) echo "Swap belegt" ;;
+        fr-FR) echo "Swap utilisé" ;;
+        pt-BR) echo "Swap usado" ;;
+        *)     echo "Swap Used" ;;
       esac ;;
-    label_comp)
+    label_storage_usage)
       case "$SS_LANG" in
-        ja-JP) echo "メモリ圧縮量" ;;
-        zh-TW) echo "記憶體壓縮量" ;;
-        zh-Hans) echo "内存压缩量" ;;
-        ko-KR) echo "압축된 메모리" ;;
-        es-ES) echo "Memoria comprimida" ;;
-        de-DE) echo "Komprimierter RAM" ;;
-        fr-FR) echo "Mémoire comprimée" ;;
-        pt-BR) echo "Memória comprimida" ;;
-        *)     echo "Compressed RAM" ;;
+        ja-JP) echo "容量使用率" ;;
+        zh-TW) echo "容量使用率" ;;
+        zh-Hans) echo "容量使用率" ;;
+        ko-KR) echo "용량 사용률" ;;
+        es-ES) echo "Uso de almacenamiento" ;;
+        de-DE) echo "Speicherbelegung" ;;
+        fr-FR) echo "Utilisation du stockage" ;;
+        pt-BR) echo "Uso de armazenamento" ;;
+        *)     echo "Capacity Usage" ;;
       esac ;;
     label_temp_live)
       case "$SS_LANG" in
-        ja-JP) echo "現在温度（バッテリー/本体）" ;;
-        zh-TW) echo "當前機身/電池溫" ;;
-        zh-Hans) echo "当前机身/电池温" ;;
-        ko-KR) echo "현재 기기/배터리 온도" ;;
-        es-ES) echo "Temp. actual de chasis/batería" ;;
-        de-DE) echo "Aktuelle Gehäuse-/Akku-Temp" ;;
-        fr-FR) echo "Temp. actuelle châssis/batterie" ;;
-        pt-BR) echo "Temp. atual de chassi/bateria" ;;
-        *)     echo "Live Chassis/Battery Temp" ;;
+        ja-JP) echo "現在温度" ;;
+        zh-TW) echo "當前溫度" ;;
+        zh-Hans) echo "当前温度" ;;
+        ko-KR) echo "현재 온도" ;;
+        es-ES) echo "Temp. actual" ;;
+        de-DE) echo "Aktuelle Temp" ;;
+        fr-FR) echo "Temp. actuelle" ;;
+        pt-BR) echo "Temp. atual" ;;
+        *)     echo "Live Temp" ;;
       esac ;;
     label_temp_avg)
       case "$SS_LANG" in
-        ja-JP) echo "全期間の平均温度" ;;
-        zh-TW) echo "歷史全期平均溫" ;;
-        zh-Hans) echo "历史全期平均温" ;;
-        ko-KR) echo "전 기간 평균 온도" ;;
-        es-ES) echo "Temp. media histórica" ;;
-        de-DE) echo "Historische Durchschnittstemp" ;;
-        fr-FR) echo "Temp. moyenne historique" ;;
-        pt-BR) echo "Temp. média histórica" ;;
-        *)     echo "Lifetime Avg Temp" ;;
+        ja-JP) echo "平均温度" ;;
+        zh-TW) echo "平均溫度" ;;
+        zh-Hans) echo "平均温度" ;;
+        ko-KR) echo "평균 온도" ;;
+        es-ES) echo "Temp. media" ;;
+        de-DE) echo "Durchschnittstemp" ;;
+        fr-FR) echo "Temp. moyenne" ;;
+        pt-BR) echo "Temp. média" ;;
+        *)     echo "Avg Temp" ;;
       esac ;;
-    label_battery)
+    label_temp_max)
       case "$SS_LANG" in
-        ja-JP) echo "バッテリー最大容量" ;;
-        zh-TW) echo "電池健康度" ;;
-        zh-Hans) echo "电池健康度" ;;
-        ko-KR) echo "배터리 성능 상태" ;;
-        es-ES) echo "Salud de la batería" ;;
-        de-DE) echo "Akku-Zustand" ;;
-        fr-FR) echo "Santé de la batterie" ;;
-        pt-BR) echo "Saúde da bateria" ;;
-        *)     echo "Battery Health" ;;
+        ja-JP) echo "最高温度" ;;
+        zh-TW) echo "最高溫度" ;;
+        zh-Hans) echo "最高温度" ;;
+        ko-KR) echo "최고 온도" ;;
+        es-ES) echo "Temp. máxima" ;;
+        de-DE) echo "Höchsttemp" ;;
+        fr-FR) echo "Temp. maximale" ;;
+        pt-BR) echo "Temp. máxima" ;;
+        *)     echo "Max Temp" ;;
+      esac ;;
+    label_battery_health)
+      case "$SS_LANG" in
+        ja-JP) echo "健康度" ;;
+        zh-TW) echo "健康度" ;;
+        zh-Hans) echo "健康度" ;;
+        ko-KR) echo "성능 상태" ;;
+        es-ES) echo "Salud" ;;
+        de-DE) echo "Zustand" ;;
+        fr-FR) echo "Santé" ;;
+        pt-BR) echo "Saúde" ;;
+        *)     echo "Health" ;;
       esac ;;
     label_cycles)
       case "$SS_LANG" in
-        ja-JP) echo "充放電回数" ;;
+        ja-JP) echo "循環回数" ;;
         zh-TW) echo "循環次數" ;;
-        zh-Hans) echo "循环计数" ;;
+        zh-Hans) echo "循环次数" ;;
         ko-KR) echo "사이클" ;;
         es-ES) echo "ciclos" ;;
         de-DE) echo "Zyklen" ;;
         fr-FR) echo "cycles" ;;
         pt-BR) echo "ciclos" ;;
-        *)     echo "cycles" ;;
+        *)     echo "Cycle Count" ;;
       esac ;;
-    verdict_healthy)
+    tag_pass)
       case "$SS_LANG" in
-        zh-TW) echo "[正常] 系統狀態良好（當前配置：${2}）。目前無升級需求。" ;;
-        ja-JP) echo "[良好] システムは良好です（現在：${2}）。買い替えの必要はありません。" ;;
-        zh-Hans) echo "[正常] 系统状态良好（当前配置：${2}）。目前无升级需求。" ;;
-        ko-KR) echo "[정상] 시스템 사양이 충분합니다(현재: ${2}). 교체가 필요하지 않습니다." ;;
-        es-ES) echo "[PASS] Sistema en buen estado (actual: ${2}). Sin necesidad de actualización." ;;
-        de-DE) echo "[PASS] Systemzustand gut (aktuell: ${2}). Kein Upgrade erforderlich." ;;
-        fr-FR) echo "[PASS] Système en bon état (actuel : ${2}). Aucune mise à niveau requise." ;;
-        pt-BR) echo "[PASS] Sistema em bom estado (atual: ${2}). Sem necessidade de substituição." ;;
-        *)     echo "[PASS] System is healthy (current: ${2}). No upgrade needed." ;;
+        ja-JP) echo "[良好]" ;;
+        zh-TW|zh-Hans) echo "[正常]" ;;
+        ko-KR) echo "[정상]" ;;
+        *)     echo "[PASS]" ;;
       esac ;;
-    verdict_warning)
-      # $2 = current RAM (e.g. 16 GB)
+    tag_warn)
       case "$SS_LANG" in
-        zh-TW) echo "[吃緊] 記憶體與 Swap 負荷較高（當前配置：${2}）。未來選購建議配置更高記憶體。" ;;
-        ja-JP) echo "[混雑] メモリと Swap の負荷が高めです（現在：${2}）。次回購入時は上位メモリを推奨します。" ;;
-        zh-Hans) echo "[吃紧] 内存与 Swap 负荷较高（当前配置：${2}）。未来选购建议配置更高内存。" ;;
-        ko-KR) echo "[주의] 메모리/Swap 부하가 높습니다(현재: ${2}). 다음 기기 구매 시 더 높은 메모리를 권장합니다." ;;
-        es-ES) echo "[WARN] Memoria/Swap ajustados (actual: ${2}). Considere más memoria en su próxima máquina." ;;
-        de-DE) echo "[WARN] RAM/Swap knapp (aktuell: ${2}). Erwägen Sie beim nächsten Mac mehr RAM." ;;
-        fr-FR) echo "[WARN] Mémoire/Swap restreints (actuel : ${2}). Envisagez plus de RAM sur votre prochaine machine." ;;
-        pt-BR) echo "[WARN] Memória/Swap limitados (atual: ${2}). Considere mais RAM em sua próxima máquina." ;;
-        *)     echo "[WARN] Memory or Swap is tight (current: ${2}). Consider a higher RAM tier on your next Mac." ;;
+        ja-JP) echo "[混雑]" ;;
+        zh-TW|zh-Hans) echo "[吃緊]" ;;
+        ko-KR) echo "[주의]" ;;
+        *)     echo "[WARN]" ;;
       esac ;;
-    verdict_critical)
-      # $2 = current RAM
+    tag_crit)
       case "$SS_LANG" in
-        zh-TW) echo "[赤字] 記憶體嚴重不足（當前配置：${2}）。建議更換更高規格之 Mac。" ;;
-        ja-JP) echo "[不足] メモリが深刻に不足しています（現在：${2}）。高スペック Mac への変更を推奨します。" ;;
-        zh-Hans) echo "[赤字] 内存严重不足（当前配置：${2}）。建议更换更高规格之 Mac。" ;;
-        ko-KR) echo "[경고] 메모리가 심각하게 부족합니다(현재: ${2}). 더 높은 사양의 Mac으로 교체를 권장합니다." ;;
-        es-ES) echo "[CRIT] Déficit grave de memoria (actual: ${2}). Se recomienda un Mac de mayor especificación." ;;
-        de-DE) echo "[CRIT] Schwerwiegendes RAM-Defizit (aktuell: ${2}). Höhere Mac-Spezifikation empfohlen." ;;
-        fr-FR) echo "[CRIT] Déficit important de mémoire (actuel : ${2}). Un Mac plus performant est recommandé." ;;
-        pt-BR) echo "[CRIT] Déficit grave de memória (atual: ${2}). Recomenda-se um Mac de maior especificação." ;;
-        *)     echo "[CRIT] Heavy memory deficit detected (current: ${2}). Higher RAM spec is recommended." ;;
+        ja-JP) echo "[不足]" ;;
+        zh-TW|zh-Hans) echo "[赤字]" ;;
+        ko-KR) echo "[경고]" ;;
+        *)     echo "[CRIT]" ;;
       esac ;;
-    footer_sheersweep)
+    name_memory)
       case "$SS_LANG" in
-        ja-JP) echo "ディスク容量を削減したい場合は sheersweep をお試しください (https://oss.cver.net/sheersweep)" ;;
-        zh-TW) echo "需要清理磁碟空間？請使用 sheersweep (https://oss.cver.net/sheersweep)" ;;
-        zh-Hans) echo "需要清理磁盘空间？请使用 sheersweep (https://oss.cver.net/sheersweep)" ;;
-        ko-KR) echo "디스크 공간을 정리해야 하나요? sheersweep을 실행해 보세요 (https://oss.cver.net/sheersweep)" ;;
-        es-ES) echo "¿Necesita liberar espacio en disco? Pruebe sheersweep (https://oss.cver.net/sheersweep)" ;;
-        de-DE) echo "Speicherplatz freigeben? Nutzen Sie sheersweep (https://oss.cver.net/sheersweep)" ;;
-        fr-FR) echo "Besoin de libérer de l'espace disque ? Utilisez sheersweep (https://oss.cver.net/sheersweep)" ;;
-        pt-BR) echo "Precisa liberar espaço em disco? Use o sheersweep (https://oss.cver.net/sheersweep)" ;;
-        *)     echo "Need to free up disk space? Run sheersweep (https://oss.cver.net/sheersweep)" ;;
+        ja-JP) echo "メモリ" ;;
+        zh-TW|zh-Hans) echo "記憶體" ;;
+        ko-KR) echo "메모리" ;;
+        es-ES|pt-BR) echo "Memoria" ;;
+        de-DE) echo "RAM" ;;
+        fr-FR) echo "Mémoire" ;;
+        *)     echo "Memory" ;;
       esac ;;
+    name_storage)
+      case "$SS_LANG" in
+        ja-JP) echo "ストレージ" ;;
+        zh-TW|zh-Hans) echo "儲存空間" ;;
+        ko-KR) echo "저장 공간" ;;
+        es-ES) echo "Almacenamiento" ;;
+        de-DE) echo "Speicher" ;;
+        fr-FR) echo "Stockage" ;;
+        pt-BR) echo "Armazenamento" ;;
+        *)     echo "Storage" ;;
+      esac ;;
+    name_battery)
+      case "$SS_LANG" in
+        ja-JP) echo "バッテリー" ;;
+        zh-TW|zh-Hans) echo "電池狀態" ;;
+        ko-KR) echo "배터리" ;;
+        es-ES) echo "Batería" ;;
+        de-DE) echo "Akku" ;;
+        fr-FR) echo "Batterie" ;;
+        pt-BR) echo "Bateria" ;;
+        *)     echo "Battery" ;;
+      esac ;;
+  esac
+}
+
+# --- Format Helper ---
+
+pad_row() {
+  local label="$1"
+  local val="$2"
+  case "$SS_LANG" in
+    zh-TW|zh-Hans|ja-JP) echo "  • ${label}：${val}" ;;
+    *) echo "  • ${label}: ${val}" ;;
   esac
 }
 
@@ -245,8 +283,45 @@ get_ssd_size() {
   esac
 }
 
-get_swap() {
-  sysctl -n vm.swapusage 2>/dev/null || echo "N/A"
+get_swap_formatted() {
+  local swap_line used_mb total_mb used_gb total_gb
+  swap_line="$(sysctl -n vm.swapusage 2>/dev/null || echo "")"
+  if [ -z "$swap_line" ]; then
+    echo "N/A"
+    return
+  fi
+
+  used_mb="$(echo "$swap_line" | awk '{for(i=1;i<=NF;i++) if($i=="used") print $(i+2)}' | tr -d 'M' | cut -d. -f1)"
+  total_mb="$(echo "$swap_line" | awk '{for(i=1;i<=NF;i++) if($i=="total") print $(i+2)}' | tr -d 'M' | cut -d. -f1)"
+
+  [ -z "$used_mb" ] && used_mb=0
+  [ -z "$total_mb" ] && total_mb=0
+
+  if [ "$used_mb" -eq 0 ]; then
+    echo "0 B"
+  else
+    used_gb="$(awk "BEGIN {printf \"%.2f\", $used_mb/1024}")"
+    total_gb="$(awk "BEGIN {printf \"%.2f\", $total_mb/1024}")"
+    echo "${used_gb} / ${total_gb} GB"
+  fi
+}
+
+get_disk_formatted() {
+  local used_df total_df pct
+  used_df="$(df -h /System/Volumes/Data 2>/dev/null | awk 'NR==2 {print $3}')"
+  total_df="$(df -h /System/Volumes/Data 2>/dev/null | awk 'NR==2 {print $2}')"
+  pct="$(df -h /System/Volumes/Data 2>/dev/null | awk 'NR==2 {print $5}')"
+
+  used_df="${used_df%Gi}"
+  used_df="${used_df%G}"
+  total_df="${total_df%Gi}"
+  total_df="${total_df%G}"
+
+  echo "${used_df} / ${total_df} GB (${pct})"
+}
+
+get_disk_pct_num() {
+  df -h /System/Volumes/Data 2>/dev/null | awk 'NR==2 {print $5}' | tr -d '%' | cut -d. -f1
 }
 
 get_temp_live() {
@@ -279,27 +354,40 @@ get_temp_avg() {
   fi
 }
 
-get_battery_health() {
-  local raw_max max_cap design_cap cycle_cnt
+get_battery_pct() {
+  local raw_max max_cap design_cap
   raw_max="$(ioreg -rn AppleSmartBattery 2>/dev/null | grep -o '"AppleRawMaxCapacity"=[0-9]*' | cut -d= -f2 | head -n1 || true)"
   design_cap="$(ioreg -rn AppleSmartBattery 2>/dev/null | grep -o '"DesignCapacity"=[0-9]*' | cut -d= -f2 | head -n1 || true)"
-  cycle_cnt="$(ioreg -rn AppleSmartBattery 2>/dev/null | grep -o '"CycleCount"=[0-9]*' | cut -d= -f2 | head -n1 || true)"
   
   if [ -n "$raw_max" ] && [ -n "$design_cap" ] && [ "$design_cap" -gt 0 ]; then
     local pct=$(( raw_max * 100 / design_cap ))
     [ "$pct" -gt 100 ] && pct=100
-    if [ -n "$cycle_cnt" ]; then
-      echo "${pct}% (${cycle_cnt} $(t label_cycles))"
-    else
-      echo "${pct}%"
-    fi
+    echo "${pct}%"
   else
     max_cap="$(ioreg -rn AppleSmartBattery 2>/dev/null | grep -o '"MaxCapacity"=[0-9]*' | cut -d= -f2 | head -n1 || true)"
     if [ -n "$max_cap" ]; then
-      echo "${max_cap}% (${cycle_cnt} $(t label_cycles))"
+      echo "${max_cap}%"
     else
       echo "N/A"
     fi
+  fi
+}
+
+get_battery_pct_num() {
+  get_battery_pct | tr -d '%' | cut -d. -f1
+}
+
+get_battery_cycles() {
+  local cycle_cnt
+  cycle_cnt="$(ioreg -rn AppleSmartBattery 2>/dev/null | grep -o '"CycleCount"=[0-9]*' | cut -d= -f2 | head -n1 || true)"
+  if [ -n "$cycle_cnt" ]; then
+    case "$SS_LANG" in
+      zh-TW|zh-Hans) echo "${cycle_cnt} 次" ;;
+      ja-JP) echo "${cycle_cnt} 回" ;;
+      *) echo "${cycle_cnt}" ;;
+    esac
+  else
+    echo "N/A"
   fi
 }
 
@@ -307,84 +395,218 @@ get_swap_used_mb() {
   sysctl -n vm.swapusage 2>/dev/null | awk '{for(i=1;i<=NF;i++) if($i=="used") print $(i+2)}' | tr -d 'M' | cut -d. -f1
 }
 
-# --- Dynamic Formatting Helpers ---
+# --- Audit Verdict Builder ---
 
-display_width() {
-  local str="$1"
-  local char_len="${#str}"
-  local byte_len
-  byte_len="$(echo -n "$str" | LC_ALL=C wc -c | tr -d " ")"
-  local cjk_bytes=$(( byte_len - char_len ))
-  local cjk_chars=$(( cjk_bytes / 2 ))
-  echo $(( char_len + cjk_chars ))
+build_verdict_line_memory() {
+  local swap_mb ram
+  swap_mb="$1"
+  ram="$2"
+
+  if [ "$swap_mb" -lt 500 ]; then
+    case "$SS_LANG" in
+      zh-TW|zh-Hans) echo "  • $(t tag_pass) $(t name_memory)：無 Swap 負擔（當前 ${ram}）。" ;;
+      ja-JP) echo "  • $(t tag_pass) $(t name_memory)：Swap 負荷なし（現在 ${ram}）。" ;;
+      ko-KR) echo "  • $(t tag_pass) $(t name_memory)：Swap 부하 없음(현재 ${ram})." ;;
+      *) echo "  • $(t tag_pass) $(t name_memory): No swap load (current: ${ram})." ;;
+    esac
+  elif [ "$swap_mb" -lt 3000 ]; then
+    local swap_fmt
+    swap_fmt="$(get_swap_formatted)"
+    case "$SS_LANG" in
+      zh-TW|zh-Hans) echo "  • $(t tag_warn) $(t name_memory)：Swap 已用 ${swap_fmt}（當前 ${ram}）。" ;;
+      ja-JP) echo "  • $(t tag_warn) $(t name_memory)：Swap 使用中 ${swap_fmt}（現在 ${ram}）。" ;;
+      ko-KR) echo "  • $(t tag_warn) $(t name_memory)：Swap 사용 중 ${swap_fmt}(현재 ${ram})." ;;
+      *) echo "  • $(t tag_warn) $(t name_memory): Swap in use ${swap_fmt} (current: ${ram})." ;;
+    esac
+  else
+    local swap_fmt
+    swap_fmt="$(get_swap_formatted)"
+    case "$SS_LANG" in
+      zh-TW|zh-Hans) echo "  • $(t tag_crit) $(t name_memory)：Swap 嚴重過載 ${swap_fmt}（當前 ${ram}）。" ;;
+      ja-JP) echo "  • $(t tag_crit) $(t name_memory)：Swap 深刻な過負荷 ${swap_fmt}（現在 ${ram}）。" ;;
+      ko-KR) echo "  • $(t tag_crit) $(t name_memory)：Swap 심각한 부하 ${swap_fmt}(현재 ${ram})." ;;
+      *) echo "  • $(t tag_crit) $(t name_memory): Heavy swap thrashing ${swap_fmt} (current: ${ram})." ;;
+    esac
+  fi
 }
 
-pad_row() {
-  local label="$1"
-  local val="$2"
-  local target_w=28
-  local w
-  w=$(display_width "$label")
-  local pad_len=$(( target_w - w ))
-  [ "$pad_len" -lt 0 ] && pad_len=0
-  local spaces=""
-  for ((i=0; i<pad_len; i++)); do spaces="${spaces} "; done
-  echo "  • ${label}${spaces}: ${val}"
+build_verdict_line_storage() {
+  local disk_pct disk_fmt
+  disk_pct="$1"
+  disk_fmt="$(get_disk_formatted)"
+
+  if [ "$disk_pct" -lt 85 ]; then
+    case "$SS_LANG" in
+      zh-TW|zh-Hans) echo "  • $(t tag_pass) $(t name_storage)：容量充裕（已用 ${disk_pct}%）。" ;;
+      ja-JP) echo "  • $(t tag_pass) $(t name_storage)：容量は十分です（使用率 ${disk_pct}%）。" ;;
+      ko-KR) echo "  • $(t tag_pass) $(t name_storage)：공간이 충분합니다(사용률 ${disk_pct}%)." ;;
+      *) echo "  • $(t tag_pass) $(t name_storage): Ample capacity (${disk_pct}% used)." ;;
+    esac
+  elif [ "$disk_pct" -lt 95 ]; then
+    case "$SS_LANG" in
+      zh-TW|zh-Hans) echo "  • $(t tag_warn) $(t name_storage)：使用率已達 ${disk_fmt}，接近降速臨界點。" ;;
+      ja-JP) echo "  • $(t tag_warn) $(t name_storage)：使用率 ${disk_fmt}、速度低下閾値に接近。" ;;
+      ko-KR) echo "  • $(t tag_warn) $(t name_storage)：사용률 ${disk_fmt}, 속도 저하 임계점 접근." ;;
+      *) echo "  • $(t tag_warn) $(t name_storage): Usage at ${disk_fmt}, near throttling threshold." ;;
+    esac
+  else
+    case "$SS_LANG" in
+      zh-TW|zh-Hans) echo "  • $(t tag_crit) $(t name_storage)：空間嚴重不足（使用率 ${disk_pct}%）。" ;;
+      ja-JP) echo "  • $(t tag_crit) $(t name_storage)：容量深刻な不足（使用率 ${disk_pct}%）。" ;;
+      ko-KR) echo "  • $(t tag_crit) $(t name_storage)：공간 심각 부족(사용률 ${disk_pct}%)." ;;
+      *) echo "  • $(t tag_crit) $(t name_storage): Severe storage deficit (${disk_pct}% used)." ;;
+    esac
+  fi
+}
+
+build_verdict_line_battery() {
+  local bat_pct bat_cycles
+  bat_pct="$1"
+  bat_cycles="$(get_battery_cycles)"
+
+  [ -z "$bat_pct" ] || [ "$bat_pct" = "N/A" ] && bat_pct=100
+
+  if [ "$bat_pct" -ge 80 ]; then
+    case "$SS_LANG" in
+      zh-TW|zh-Hans) echo "  • $(t tag_pass) $(t name_battery)：健康度 ${bat_pct}%（${bat_cycles}），狀況良好。" ;;
+      ja-JP) echo "  • $(t tag_pass) $(t name_battery)：最大容量 ${bat_pct}%（${bat_cycles}）、良好。" ;;
+      ko-KR) echo "  • $(t tag_pass) $(t name_battery)：성능 상태 ${bat_pct}%(${bat_cycles}), 양호." ;;
+      *) echo "  • $(t tag_pass) $(t name_battery): Health ${bat_pct}% (${bat_cycles}), good condition." ;;
+    esac
+  elif [ "$bat_pct" -ge 70 ]; then
+    case "$SS_LANG" in
+      zh-TW|zh-Hans) echo "  • $(t tag_warn) $(t name_battery)：健康度已降至 ${bat_pct}%（${bat_cycles}）。" ;;
+      ja-JP) echo "  • $(t tag_warn) $(t name_battery)：最大容量低下 ${bat_pct}%（${bat_cycles}）。" ;;
+      ko-KR) echo "  • $(t tag_warn) $(t name_battery)：성능 저하 ${bat_pct}%(${bat_cycles})." ;;
+      *) echo "  • $(t tag_warn) $(t name_battery): Health degraded to ${bat_pct}% (${bat_cycles})." ;;
+    esac
+  else
+    case "$SS_LANG" in
+      zh-TW|zh-Hans) echo "  • $(t tag_crit) $(t name_battery)：健康度嚴重衰退至 ${bat_pct}%（${bat_cycles}）。" ;;
+      ja-JP) echo "  • $(t tag_crit) $(t name_battery)：バッテリー劣化 ${bat_pct}%（${bat_cycles}）。" ;;
+      ko-KR) echo "  • $(t tag_crit) $(t name_battery)：배터리 심각 저하 ${bat_pct}%(${bat_cycles})." ;;
+      *) echo "  • $(t tag_crit) $(t name_battery): Battery severely degraded to ${bat_pct}% (${bat_cycles})." ;;
+    esac
+  fi
+}
+
+build_consolidated_recommendation() {
+  local swap_mb disk_pct bat_pct
+  swap_mb="$1"
+  disk_pct="$2"
+  bat_pct="$3"
+  [ -z "$bat_pct" ] || [ "$bat_pct" = "N/A" ] && bat_pct=100
+
+  local need_ram=0 need_ssd=0 need_bat=0
+  [ "$swap_mb" -ge 500 ] && need_ram=1
+  [ "$disk_pct" -ge 85 ] && need_ssd=1
+  [ "$bat_pct" -lt 80 ] && need_bat=1
+
+  if [ "$need_ram" -eq 0 ] && [ "$need_ssd" -eq 0 ] && [ "$need_bat" -eq 0 ]; then
+    case "$SS_LANG" in
+      zh-TW|zh-Hans) echo "建議：硬體狀態極佳，目前完全無升級或換機需求。" ;;
+      ja-JP) echo "推奨：ハードウェア状態は非常に良好です。買い替えの必要はありません。" ;;
+      ko-KR) echo "권장: 하드웨어 상태가 매우 양호합니다. 현재 교체가 필요하지 않습니다." ;;
+      *) echo "Recommendation: Hardware is in excellent condition. No upgrade needed." ;;
+    esac
+  else
+    case "$SS_LANG" in
+      zh-TW|zh-Hans)
+        local rec="建議：若常態感覺延遲，下一台 Mac 建議選購"
+        if [ "$need_ram" -eq 1 ] && [ "$need_ssd" -eq 1 ]; then
+          rec="${rec}更高記憶體與儲存容量。"
+        elif [ "$need_ram" -eq 1 ]; then
+          rec="${rec}更高的記憶體規格。"
+        elif [ "$need_ssd" -eq 1 ]; then
+          rec="${rec}更高的儲存容量。"
+        elif [ "$need_bat" -eq 1 ]; then
+          rec="建議：更換電池或規劃更換新 Mac。"
+        fi
+        echo "$rec"
+        ;;
+      ja-JP)
+        local rec="推奨：日常の動作で遅延を感じる場合は、次回購入時に"
+        if [ "$need_ram" -eq 1 ] && [ "$need_ssd" -eq 1 ]; then
+          rec="${rec}上位のメモリおよびストレージ容量を推奨します。"
+        elif [ "$need_ram" -eq 1 ]; then
+          rec="${rec}上位のメモリ容量を推奨します。"
+        elif [ "$need_ssd" -eq 1 ]; then
+          rec="${rec}上位のストレージ容量を推奨します。"
+        elif [ "$need_bat" -eq 1 ]; then
+          rec="推奨：バッテリー交換または新しい Mac への買い替えを検討してください。"
+        fi
+        echo "$rec"
+        ;;
+      *)
+        local rec="Recommendation: If lag persists, consider opting for "
+        if [ "$need_ram" -eq 1 ] && [ "$need_ssd" -eq 1 ]; then
+          rec="${rec}a higher RAM tier and larger storage on your next Mac."
+        elif [ "$need_ram" -eq 1 ]; then
+          rec="${rec}a higher RAM tier on your next Mac."
+        elif [ "$need_ssd" -eq 1 ]; then
+          rec="${rec}larger storage on your next Mac."
+        elif [ "$need_bat" -eq 1 ]; then
+          rec="Recommendation: Consider replacing the battery or upgrading to a new Mac."
+        fi
+        echo "$rec"
+        ;;
+    esac
+  fi
 }
 
 # --- Run Audit Output ---
 
 run_audit() {
-  local chip ram ssd swap_info temp_live temp_max temp_avg bat_health swap_used_mb compressed_pages comp_gb
+  local chip ram ssd swap_fmt disk_fmt temp_live temp_max temp_avg bat_pct bat_cycles swap_used_mb disk_pct_num bat_pct_num
   chip="$(get_chip_name)"
   ram="$(get_ram_gb)"
   ssd="$(get_ssd_size)"
-  swap_info="$(get_swap)"
+  swap_fmt="$(get_swap_formatted)"
+  disk_fmt="$(get_disk_formatted)"
   temp_live="$(get_temp_live)"
   temp_max="$(get_temp_max)"
   temp_avg="$(get_temp_avg)"
-  bat_health="$(get_battery_health)"
+  bat_pct="$(get_battery_pct)"
+  bat_cycles="$(get_battery_cycles)"
   swap_used_mb="$(get_swap_used_mb)"
+  disk_pct_num="$(get_disk_pct_num)"
+  bat_pct_num="$(get_battery_pct_num)"
   [ -z "$swap_used_mb" ] && swap_used_mb=0
-
-  compressed_pages="$(vm_stat 2>/dev/null | awk '/Pages stored in compressor/ {print $5}' | tr -d '.' || echo 0)"
+  [ -z "$disk_pct_num" ] && disk_pct_num=0
 
   # Single Block Flush Output
   {
     echo "============================================================"
     t banner_title
     echo "============================================================"
-    pad_row "$(t sec_header)" "${chip} (${ram} / ${ssd})"
+    pad_row "$(t sec_header)" "${chip} (${ram} · ${ssd})"
     echo ""
     t sec_memory
-    pad_row "$(t label_swap)" "${swap_info}"
-    if [ "$compressed_pages" -gt 0 ]; then
-      comp_gb="$(awk "BEGIN {printf \"%.1f\", $compressed_pages * 16384 / 1073741824}")"
-      pad_row "$(t label_comp)" "~${comp_gb} GB"
-    fi
+    pad_row "$(t label_swap)" "${swap_fmt}"
     echo ""
-    t sec_thermal
+    t sec_storage
+    pad_row "$(t label_storage_usage)" "${disk_fmt}"
+    echo ""
+    t sec_battery
     pad_row "$(t label_temp_live)" "${temp_live} °C"
-    pad_row "$(t label_temp_avg)" "${temp_avg} (Max: ${temp_max})"
-    pad_row "$(t label_battery)" "${bat_health}"
+    pad_row "$(t label_temp_avg)" "${temp_avg} °C"
+    pad_row "$(t label_temp_max)" "${temp_max}"
+    pad_row "$(t label_battery_health)" "${bat_pct}"
+    pad_row "$(t label_cycles)" "${bat_cycles}"
     echo ""
     echo "------------------------------------------------------------"
     t verdict_title
-    if [ "$swap_used_mb" -lt 500 ]; then
-      t verdict_healthy "$ram"
-    elif [ "$swap_used_mb" -lt 3000 ]; then
-      t verdict_warning "$ram"
-    else
-      t verdict_critical "$ram"
-    fi
-    echo "------------------------------------------------------------"
-    t footer_sheersweep
+    build_verdict_line_memory "$swap_used_mb" "$ram"
+    build_verdict_line_storage "$disk_pct_num"
+    build_verdict_line_battery "$bat_pct_num"
+    echo ""
+    build_consolidated_recommendation "$swap_used_mb" "$disk_pct_num" "$bat_pct_num"
     echo "============================================================"
   }
 }
 
 run_json() {
-  local chip ram ssd temp_live temp_max temp_avg swap_used_mb
+  local chip ram ssd temp_live temp_max temp_avg swap_used_mb disk_pct_num bat_pct_num
   chip="$(get_chip_name)"
   ram="$(get_ram_gb)"
   ssd="$(get_ssd_size)"
@@ -392,6 +614,8 @@ run_json() {
   temp_max="$(get_temp_max)"
   temp_avg="$(get_temp_avg)"
   swap_used_mb="$(get_swap_used_mb)"
+  disk_pct_num="$(get_disk_pct_num)"
+  bat_pct_num="$(get_battery_pct_num)"
   [ -z "$swap_used_mb" ] && swap_used_mb=0
 
   cat <<EOF
@@ -401,6 +625,8 @@ run_json() {
   "ram": "${ram}",
   "ssd": "${ssd}",
   "swap_used_mb": ${swap_used_mb},
+  "disk_used_pct": ${disk_pct_num},
+  "battery_health_pct": "${bat_pct_num}",
   "temp_live_c": "${temp_live}",
   "temp_avg_c": "${temp_avg}",
   "temp_max_c": "${temp_max}"
