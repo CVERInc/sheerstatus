@@ -97,6 +97,78 @@ t() {
         pt-BR) echo "【Veredito do diagnóstico】" ;;
         *)     echo "【Audit Verdict】" ;;
       esac ;;
+    label_swap)
+      case "$SS_LANG" in
+        ja-JP) echo "Swap ステータス" ;;
+        zh-TW) echo "Swap 狀態" ;;
+        zh-Hans) echo "Swap 状态" ;;
+        ko-KR) echo "Swap 상태" ;;
+        es-ES) echo "Estado de Swap" ;;
+        de-DE) echo "Swap-Status" ;;
+        fr-FR) echo "État du Swap" ;;
+        pt-BR) echo "Estado do Swap" ;;
+        *)     echo "Swap Status" ;;
+      esac ;;
+    label_comp)
+      case "$SS_LANG" in
+        ja-JP) echo "メモリ圧縮量" ;;
+        zh-TW) echo "記憶體壓縮量" ;;
+        zh-Hans) echo "内存压缩量" ;;
+        ko-KR) echo "압축된 메모리" ;;
+        es-ES) echo "Memoria comprimida" ;;
+        de-DE) echo "Komprimierter RAM" ;;
+        fr-FR) echo "Mémoire comprimée" ;;
+        pt-BR) echo "Memória comprimida" ;;
+        *)     echo "Compressed RAM" ;;
+      esac ;;
+    label_temp_live)
+      case "$SS_LANG" in
+        ja-JP) echo "現在温度（バッテリー/本体）" ;;
+        zh-TW) echo "當前機身/電池溫" ;;
+        zh-Hans) echo "当前机身/电池温" ;;
+        ko-KR) echo "현재 기기/배터리 온도" ;;
+        es-ES) echo "Temp. actual de chasis/batería" ;;
+        de-DE) echo "Aktuelle Gehäuse-/Akku-Temp" ;;
+        fr-FR) echo "Temp. actuelle châssis/batterie" ;;
+        pt-BR) echo "Temp. atual de chassi/bateria" ;;
+        *)     echo "Live Chassis/Battery Temp" ;;
+      esac ;;
+    label_temp_avg)
+      case "$SS_LANG" in
+        ja-JP) echo "全期間の平均温度" ;;
+        zh-TW) echo "歷史全期平均溫" ;;
+        zh-Hans) echo "历史全期平均温" ;;
+        ko-KR) echo "전 기간 평균 온도" ;;
+        es-ES) echo "Temp. media histórica" ;;
+        de-DE) echo "Historische Durchschnittstemp" ;;
+        fr-FR) echo "Temp. moyenne historique" ;;
+        pt-BR) echo "Temp. média histórica" ;;
+        *)     echo "Lifetime Avg Temp" ;;
+      esac ;;
+    label_temp_max)
+      case "$SS_LANG" in
+        ja-JP) echo "全期間の最高温度" ;;
+        zh-TW) echo "歷史極限最高溫" ;;
+        zh-Hans) echo "历史极限最高温" ;;
+        ko-KR) echo "전 기간 최고 온도" ;;
+        es-ES) echo "Temp. máxima histórica" ;;
+        de-DE) echo "Historische Höchsttemp" ;;
+        fr-FR) echo "Temp. maximale historique" ;;
+        pt-BR) echo "Temp. máxima histórica" ;;
+        *)     echo "Lifetime Max Temp" ;;
+      esac ;;
+    label_disk_free)
+      case "$SS_LANG" in
+        ja-JP) echo "Data ストレージ空き" ;;
+        zh-TW) echo "Data 磁碟剩餘" ;;
+        zh-Hans) echo "Data 磁盘剩余" ;;
+        ko-KR) echo "Data 저장 공간 여유" ;;
+        es-ES) echo "Espacio libre en disco Data" ;;
+        de-DE) echo "Freier Data-Speicher" ;;
+        fr-FR) echo "Espace disque Data libre" ;;
+        pt-BR) echo "Espaço livre no disco Data" ;;
+        *)     echo "Data Disk Free" ;;
+      esac ;;
     verdict_healthy)
       case "$SS_LANG" in
         zh-TW) echo "🟢 系統非常健康。記憶體與儲存空間極為充裕，目前無任何升級需求。" ;;
@@ -197,24 +269,24 @@ run_audit() {
   echo "============================================================"
   echo ""
   t sec_memory
-  echo "  • Swap 狀態       : ${swap_info}"
+  echo "  • $(t label_swap)       : ${swap_info}"
   
   local compressed_pages comp_gb
   compressed_pages="$(vm_stat 2>/dev/null | awk '/Pages stored in compressor/ {print $5}' | tr -d '.' || echo 0)"
   if [ "$compressed_pages" -gt 0 ]; then
     comp_gb="$(awk "BEGIN {printf \"%.1f\", $compressed_pages * 16384 / 1073741824}")"
-    echo "  • 記憶體壓縮量   : ~${comp_gb} GB"
+    echo "  • $(t label_comp)   : ~${comp_gb} GB"
   fi
   echo ""
 
   t sec_thermal
-  echo "  • 當前機身/電池溫 : ${temp_live} °C"
-  echo "  • 歷史全期平均溫 : ${temp_avg} °C"
-  echo "  • 歷史極限最高溫 : ${temp_max} °C"
+  echo "  • $(t label_temp_live) : ${temp_live} °C"
+  echo "  • $(t label_temp_avg) : ${temp_avg} °C"
+  echo "  • $(t label_temp_max) : ${temp_max} °C"
   echo ""
 
   t sec_disk
-  echo "  • Data 磁碟剩餘  : ${disk_info}"
+  echo "  • $(t label_disk_free)  : ${disk_info}"
   echo ""
 
   echo "------------------------------------------------------------"
