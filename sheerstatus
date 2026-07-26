@@ -11,7 +11,7 @@
 #
 set -u
 
-VERSION="0.2.1"
+VERSION="0.3.0"
 
 # ============================================================================
 # i18n — en-US · ja-JP · zh-TW · zh-Hans · ko-KR · es-ES · de-DE · fr-FR · pt-BR.
@@ -39,15 +39,15 @@ t() {
   case "$1" in
     banner_title)
       case "$SS_LANG" in
-        ja-JP) echo "🖥️  sheerstatus v${VERSION} — Mac ハードウェア＆買替診断" ;;
-        zh-TW) echo "🖥️  sheerstatus v${VERSION} —— Mac 硬體健康與換機診斷" ;;
-        zh-Hans) echo "🖥️  sheerstatus v${VERSION} —— Mac 硬件健康与换机诊断" ;;
-        ko-KR) echo "🖥️  sheerstatus v${VERSION} — Mac 하드웨어 및 교체 진단" ;;
-        es-ES) echo "🖥️  sheerstatus v${VERSION} — Auditoría de hardware y actualización de Mac" ;;
-        de-DE) echo "🖥️  sheerstatus v${VERSION} — Mac Hardware- & Aufrüstungsdiagnose" ;;
-        fr-FR) echo "🖥️  sheerstatus v${VERSION} — Diagnostic matériel et de mise à niveau Mac" ;;
-        pt-BR) echo "🖥️  sheerstatus v${VERSION} — Auditoria de hardware e substituição de Mac" ;;
-        *)     echo "🖥️  sheerstatus v${VERSION} — Mac Hardware & Pre-Upgrade Auditor" ;;
+        ja-JP) echo "sheerstatus v${VERSION} — Mac ハードウェア＆買替診断" ;;
+        zh-TW) echo "sheerstatus v${VERSION} —— Mac 硬體健康與換機診斷" ;;
+        zh-Hans) echo "sheerstatus v${VERSION} —— Mac 硬件健康与换机诊断" ;;
+        ko-KR) echo "sheerstatus v${VERSION} — Mac 하드웨어 및 교체 진단" ;;
+        es-ES) echo "sheerstatus v${VERSION} — Auditoría de hardware y actualización de Mac" ;;
+        de-DE) echo "sheerstatus v${VERSION} — Mac Hardware- & Aufrüstungsdiagnose" ;;
+        fr-FR) echo "sheerstatus v${VERSION} — Diagnostic matériel et de mise à niveau Mac" ;;
+        pt-BR) echo "sheerstatus v${VERSION} — Auditoria de hardware e substituição de Mac" ;;
+        *)     echo "sheerstatus v${VERSION} — Mac Hardware & Pre-Upgrade Auditor" ;;
       esac ;;
     sec_header)
       case "$SS_LANG" in
@@ -171,53 +171,53 @@ t() {
       esac ;;
     verdict_healthy)
       case "$SS_LANG" in
-        zh-TW) echo "🟢 系統非常健康。記憶體與硬體配置充足，目前無任何升級需求。" ;;
-        ja-JP) echo "🟢 システムは非常に健康です。メモリとハードウェアは十分であり、買い替えの必要はありません。" ;;
-        zh-Hans) echo "🟢 系统非常健康。内存与硬件配置极其充裕，目前无任何升级需求。" ;;
-        ko-KR) echo "🟢 시스템이 매우 정상입니다. 메모리와 하드웨어 사양이 충분하여 현재 교체할 필요가 없습니다." ;;
-        es-ES) echo "🟢 El sistema está extremadamente saludable. Memoria y almacenamiento amplios. No se requiere actualización." ;;
-        de-DE) echo "🟢 Das System ist äußerst gesund. Reichlich RAM und Hardwarekapazität vorhanden. Kein Upgrade erforderlich." ;;
-        fr-FR) echo "🟢 Le système est en excellente santé. Mémoire et matériel amplement suffisants. Aucune mise à niveau requise." ;;
-        pt-BR) echo "🟢 O sistema está extremamente saudável. Memória e hardware amplos. Nenhuma substituição é necessária." ;;
-        *)     echo "🟢 System is extremely healthy. Ample memory and hardware capacity available. No upgrade needed." ;;
+        zh-TW) echo "[正常] 系統狀態良好（當前配置：${2}）。目前無升級需求。" ;;
+        ja-JP) echo "[良好] システムは良好です（現在：${2}）。買い替えの必要はありません。" ;;
+        zh-Hans) echo "[正常] 系统状态良好（当前配置：${2}）。目前无升级需求。" ;;
+        ko-KR) echo "[정상] 시스템 사양이 충분합니다(현재: ${2}). 교체가 필요하지 않습니다." ;;
+        es-ES) echo "[PASS] Sistema en buen estado (actual: ${2}). Sin necesidad de actualización." ;;
+        de-DE) echo "[PASS] Systemzustand gut (aktuell: ${2}). Kein Upgrade erforderlich." ;;
+        fr-FR) echo "[PASS] Système en bon état (actuel : ${2}). Aucune mise à niveau requise." ;;
+        pt-BR) echo "[PASS] Sistema em bom estado (atual: ${2}). Sem necessidade de substituição." ;;
+        *)     echo "[PASS] System is healthy (current: ${2}). No upgrade needed." ;;
       esac ;;
     verdict_warning)
       # $2 = current RAM (e.g. 16 GB)
       case "$SS_LANG" in
-        zh-TW) echo "🟡 記憶體壓力與 Swap 開始吃緊（當前配置：${2}）。若工作時常態感覺微延遲，建議未來選購時升級至更高的記憶體規格。" ;;
-        ja-JP) echo "🟡 メモリまたは Swap が混雑しています（現在：${2}）。日常の動作で遅延を感じる場合は、次回購入時に上位のメモリ容量を推奨します。" ;;
-        zh-Hans) echo "🟡 内存压力与 Swap 开始吃紧（当前配置：${2}）。若工作时常态感觉微延迟，建议未来选购时升级至更高的内存规格。" ;;
-        ko-KR) echo "🟡 메모리 또는 Swap에 부하가 걸리고 있습니다(현재: ${2}). 지연이 지속되면 다음 기기 구매 시 더 높은 메모리 사양을 권장합니다." ;;
-        es-ES) echo "🟡 La memoria o el Swap están ajustados (actual: ${2}). Considere optar por más memoria en su próxima máquina si persiste el retraso." ;;
-        de-DE) echo "🟡 Arbeitsspeicher oder Swap wird knapp (aktuell: ${2}). Erwägen Sie bei Ihrem nächsten Mac mehr RAM, falls Verzögerungen auftreten." ;;
-        fr-FR) echo "🟡 La mémoire ou le Swap devient restreint (actuel : ${2}). Envisagez plus de RAM sur votre prochaine machine si les ralentissements persistent." ;;
-        pt-BR) echo "🟡 A memória ou o Swap estão ficando limitados (atual: ${2}). Considere mais RAM em sua próxima máquina se o atraso persistir." ;;
-        *)     echo "🟡 Memory or Swap is getting tight (current: ${2}). Consider opting for a higher RAM tier on your next machine if lag persists." ;;
+        zh-TW) echo "[吃緊] 記憶體與 Swap 負荷較高（當前配置：${2}）。未來選購建議配置更高記憶體。" ;;
+        ja-JP) echo "[混雑] メモリと Swap の負荷が高めです（現在：${2}）。次回購入時は上位メモリを推奨します。" ;;
+        zh-Hans) echo "[吃紧] 内存与 Swap 负荷较高（当前配置：${2}）。未来选购建议配置更高内存。" ;;
+        ko-KR) echo "[주의] 메모리/Swap 부하가 높습니다(현재: ${2}). 다음 기기 구매 시 더 높은 메모리를 권장합니다." ;;
+        es-ES) echo "[WARN] Memoria/Swap ajustados (actual: ${2}). Considere más memoria en su próxima máquina." ;;
+        de-DE) echo "[WARN] RAM/Swap knapp (aktuell: ${2}). Erwägen Sie beim nächsten Mac mehr RAM." ;;
+        fr-FR) echo "[WARN] Mémoire/Swap restreints (actuel : ${2}). Envisagez plus de RAM sur votre prochaine machine." ;;
+        pt-BR) echo "[WARN] Memória/Swap limitados (atual: ${2}). Considere mais RAM em sua próxima máquina." ;;
+        *)     echo "[WARN] Memory or Swap is tight (current: ${2}). Consider a higher RAM tier on your next Mac." ;;
       esac ;;
     verdict_critical)
       # $2 = current RAM
       case "$SS_LANG" in
-        zh-TW) echo "🔴 記憶體嚴重赤字（當前配置：${2}）！系統正面臨高強度 Swap 換頁，建議規劃更換更高規格之 Mac。" ;;
-        ja-JP) echo "🔴 メモリが深刻な不足状態です（現在：${2}）。高スペックな Mac への買い替えを推奨します。" ;;
-        zh-Hans) echo "🔴 内存严重赤字（当前配置：${2}）！系统正面临高强度 Swap 换页，建议规划更换更高规格之 Mac。" ;;
-        ko-KR) echo "🔴 메모리가 심각하게 부족합니다(현재: ${2})! 더 높은 사양의 Mac으로 교체를 권장합니다." ;;
-        es-ES) echo "🔴 ¡Déficit grave de memoria (actual: ${2})! Se detectó una presión severa de swap. Se recomienda actualizar a un Mac de mayor especificación." ;;
-        de-DE) echo "🔴 Schwerwiegendes RAM-Defizit (aktuell: ${2})! Starker Swap-Druck erkannt. Ein Upgrade auf einen leistungsstärkeren Mac wird empfohlen." ;;
-        fr-FR) echo "🔴 Déficit important de mémoire (actuel : ${2}) ! Une pression sévère du Swap a été détectée. La mise à niveau vers un Mac plus performant est recommandée." ;;
-        pt-BR) echo "🔴 Déficit grave de memória (atual: ${2})! Pressão severa de swap detectada. Recomenda-se a substituição por um Mac de maior especificação." ;;
-        *)     echo "🔴 Heavy memory deficit (current: ${2})! Severe swap pressure detected. Upgrading to a higher-spec Mac is recommended." ;;
+        zh-TW) echo "[赤字] 記憶體嚴重不足（當前配置：${2}）。建議更換更高規格之 Mac。" ;;
+        ja-JP) echo "[不足] メモリが深刻に不足しています（現在：${2}）。高スペック Mac への変更を推奨します。" ;;
+        zh-Hans) echo "[赤字] 内存严重不足（当前配置：${2}）。建议更换更高规格之 Mac。" ;;
+        ko-KR) echo "[경고] 메모리가 심각하게 부족합니다(현재: ${2}). 더 높은 사양의 Mac으로 교체를 권장합니다." ;;
+        es-ES) echo "[CRIT] Déficit grave de memoria (actual: ${2}). Se recomienda un Mac de mayor especificación." ;;
+        de-DE) echo "[CRIT] Schwerwiegendes RAM-Defizit (aktuell: ${2}). Höhere Mac-Spezifikation empfohlen." ;;
+        fr-FR) echo "[CRIT] Déficit important de mémoire (actuel : ${2}). Un Mac plus performant est recommandé." ;;
+        pt-BR) echo "[CRIT] Déficit grave de memória (atual: ${2}). Recomenda-se um Mac de maior especificação." ;;
+        *)     echo "[CRIT] Heavy memory deficit detected (current: ${2}). Higher RAM spec is recommended." ;;
       esac ;;
     footer_sheersweep)
       case "$SS_LANG" in
-        ja-JP) echo "💡 ディスク容量を削減したいですか？ sheersweep をお試しください (https://oss.cver.net/sheersweep)" ;;
-        zh-TW) echo "💡 需要清理磁碟空間？請使用 sheersweep (https://oss.cver.net/sheersweep)" ;;
-        zh-Hans) echo "💡 需要清理磁盘空间？请使用 sheersweep (https://oss.cver.net/sheersweep)" ;;
-        ko-KR) echo "💡 디스크 공간을 정리해야 하나요? sheersweep을 실행해 보세요 (https://oss.cver.net/sheersweep)" ;;
-        es-ES) echo "💡 ¿Necesita liberar espacio en disco? Pruebe sheersweep (https://oss.cver.net/sheersweep)" ;;
-        de-DE) echo "💡 Speicherplatz freigeben? Nutzen Sie sheersweep (https://oss.cver.net/sheersweep)" ;;
-        fr-FR) echo "💡 Besoin de libérer de l'espace disque ? Utilisez sheersweep (https://oss.cver.net/sheersweep)" ;;
-        pt-BR) echo "💡 Precisa liberar espaço em disco? Use o sheersweep (https://oss.cver.net/sheersweep)" ;;
-        *)     echo "💡 Need to free up disk space? Run sheersweep (https://oss.cver.net/sheersweep)" ;;
+        ja-JP) echo "ディスク容量を削減したい場合は sheersweep をお試しください (https://oss.cver.net/sheersweep)" ;;
+        zh-TW) echo "需要清理磁碟空間？請使用 sheersweep (https://oss.cver.net/sheersweep)" ;;
+        zh-Hans) echo "需要清理磁盘空间？请使用 sheersweep (https://oss.cver.net/sheersweep)" ;;
+        ko-KR) echo "디스크 공간을 정리해야 하나요? sheersweep을 실행해 보세요 (https://oss.cver.net/sheersweep)" ;;
+        es-ES) echo "¿Necesita liberar espacio en disco? Pruebe sheersweep (https://oss.cver.net/sheersweep)" ;;
+        de-DE) echo "Speicherplatz freigeben? Nutzen Sie sheersweep (https://oss.cver.net/sheersweep)" ;;
+        fr-FR) echo "Besoin de libérer de l'espace disque ? Utilisez sheersweep (https://oss.cver.net/sheersweep)" ;;
+        pt-BR) echo "Precisa liberar espaço em disco? Use o sheersweep (https://oss.cver.net/sheersweep)" ;;
+        *)     echo "Need to free up disk space? Run sheersweep (https://oss.cver.net/sheersweep)" ;;
       esac ;;
   esac
 }
@@ -225,9 +225,7 @@ t() {
 # --- Gather Metrics ---
 
 get_chip_name() {
-  local chip
-  chip="$(sysctl -n machdep.cpu.brand_string 2>/dev/null || sysctl -n hw.model 2>/dev/null || echo "Apple Silicon")"
-  echo "$chip"
+  sysctl -n machdep.cpu.brand_string 2>/dev/null || sysctl -n hw.model 2>/dev/null || echo "Apple Silicon"
 }
 
 get_ram_gb() {
@@ -309,10 +307,35 @@ get_swap_used_mb() {
   sysctl -n vm.swapusage 2>/dev/null | awk '{for(i=1;i<=NF;i++) if($i=="used") print $(i+2)}' | tr -d 'M' | cut -d. -f1
 }
 
+# --- Dynamic Formatting Helpers ---
+
+display_width() {
+  local str="$1"
+  local char_len="${#str}"
+  local byte_len
+  byte_len="$(echo -n "$str" | LC_ALL=C wc -c | tr -d " ")"
+  local cjk_bytes=$(( byte_len - char_len ))
+  local cjk_chars=$(( cjk_bytes / 2 ))
+  echo $(( char_len + cjk_chars ))
+}
+
+pad_row() {
+  local label="$1"
+  local val="$2"
+  local target_w=28
+  local w
+  w=$(display_width "$label")
+  local pad_len=$(( target_w - w ))
+  [ "$pad_len" -lt 0 ] && pad_len=0
+  local spaces=""
+  for ((i=0; i<pad_len; i++)); do spaces="${spaces} "; done
+  echo "  • ${label}${spaces}: ${val}"
+}
+
 # --- Run Audit Output ---
 
 run_audit() {
-  local chip ram ssd swap_info temp_live temp_max temp_avg bat_health swap_used_mb
+  local chip ram ssd swap_info temp_live temp_max temp_avg bat_health swap_used_mb compressed_pages comp_gb
   chip="$(get_chip_name)"
   ram="$(get_ram_gb)"
   ssd="$(get_ssd_size)"
@@ -324,40 +347,40 @@ run_audit() {
   swap_used_mb="$(get_swap_used_mb)"
   [ -z "$swap_used_mb" ] && swap_used_mb=0
 
-  echo "============================================================"
-  t banner_title
-  echo "============================================================"
-  echo "  • $(t sec_header) : ${chip} (${ram} / ${ssd})"
-  echo ""
-  t sec_memory
-  echo "  • $(t label_swap)       : ${swap_info}"
-  
-  local compressed_pages comp_gb
   compressed_pages="$(vm_stat 2>/dev/null | awk '/Pages stored in compressor/ {print $5}' | tr -d '.' || echo 0)"
-  if [ "$compressed_pages" -gt 0 ]; then
-    comp_gb="$(awk "BEGIN {printf \"%.1f\", $compressed_pages * 16384 / 1073741824}")"
-    echo "  • $(t label_comp)   : ~${comp_gb} GB"
-  fi
-  echo ""
 
-  t sec_thermal
-  echo "  • $(t label_temp_live) : ${temp_live} °C"
-  echo "  • $(t label_temp_avg) : ${temp_avg} (Max: ${temp_max})"
-  echo "  • $(t label_battery)     : ${bat_health}"
-  echo ""
-
-  echo "------------------------------------------------------------"
-  t verdict_title
-  if [ "$swap_used_mb" -lt 500 ]; then
-    t verdict_healthy "$ram"
-  elif [ "$swap_used_mb" -lt 3000 ]; then
-    t verdict_warning "$ram"
-  else
-    t verdict_critical "$ram"
-  fi
-  echo "------------------------------------------------------------"
-  t footer_sheersweep
-  echo "============================================================"
+  # Single Block Flush Output
+  {
+    echo "============================================================"
+    t banner_title
+    echo "============================================================"
+    pad_row "$(t sec_header)" "${chip} (${ram} / ${ssd})"
+    echo ""
+    t sec_memory
+    pad_row "$(t label_swap)" "${swap_info}"
+    if [ "$compressed_pages" -gt 0 ]; then
+      comp_gb="$(awk "BEGIN {printf \"%.1f\", $compressed_pages * 16384 / 1073741824}")"
+      pad_row "$(t label_comp)" "~${comp_gb} GB"
+    fi
+    echo ""
+    t sec_thermal
+    pad_row "$(t label_temp_live)" "${temp_live} °C"
+    pad_row "$(t label_temp_avg)" "${temp_avg} (Max: ${temp_max})"
+    pad_row "$(t label_battery)" "${bat_health}"
+    echo ""
+    echo "------------------------------------------------------------"
+    t verdict_title
+    if [ "$swap_used_mb" -lt 500 ]; then
+      t verdict_healthy "$ram"
+    elif [ "$swap_used_mb" -lt 3000 ]; then
+      t verdict_warning "$ram"
+    else
+      t verdict_critical "$ram"
+    fi
+    echo "------------------------------------------------------------"
+    t footer_sheersweep
+    echo "============================================================"
+  }
 }
 
 run_json() {
