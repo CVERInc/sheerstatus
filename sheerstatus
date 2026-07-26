@@ -11,7 +11,7 @@
 #
 set -u
 
-VERSION="0.6.1"
+VERSION="0.6.2"
 
 # ============================================================================
 # i18n — en-US · ja-JP · zh-TW · zh-Hans · ko-KR · es-ES · de-DE · fr-FR · pt-BR.
@@ -321,11 +321,9 @@ get_ram_gb() {
 }
 
 get_ssd_size() {
-  local mount_path
-  mount_path="$(get_target_mount)"
-
+  local mount_path="${1:-$(get_target_mount)}"
   local raw_df
-  # Force local-only df (-hl) to prevent NFS network mount hangs
+  
   raw_df="$(df -hl "$mount_path" 2>/dev/null | awk 'NR==2 {print $2}')"
   raw_df="${raw_df%Gi}"
   raw_df="${raw_df%G}"
@@ -374,14 +372,14 @@ get_swap_formatted() {
 }
 
 get_disk_formatted() {
-  local mount_path
-  mount_path="$(get_target_mount)"
-
-  local used_df total_df pct
-  # Force local-only df (-hl) to prevent NFS network mount hangs
-  used_df="$(df -hl "$mount_path" 2>/dev/null | awk 'NR==2 {print $3}')"
-  total_df="$(df -hl "$mount_path" 2>/dev/null | awk 'NR==2 {print $2}')"
-  pct="$(df -hl "$mount_path" 2>/dev/null | awk 'NR==2 {print $5}')"
+  local mount_path="${1:-$(get_target_mount)}"
+  local df_out used_df total_df pct
+  
+  # Single df call to extract all 3 fields efficiently
+  df_out="$(df -hl "$mount_path" 2>/dev/null | awk 'NR==2 {print $3, $2, $5}')"
+  used_df="$(echo "$df_out" | awk '{print $1}')"
+  total_df="$(echo "$df_out" | awk '{print $2}')"
+  pct="$(echo "$df_out" | awk '{print $3}')"
 
   used_df="${used_df%Gi}"
   used_df="${used_df%G}"
@@ -392,9 +390,7 @@ get_disk_formatted() {
 }
 
 get_disk_pct_num() {
-  local mount_path
-  mount_path="$(get_target_mount)"
-  # Force local-only df (-hl)
+  local mount_path="${1:-$(get_target_mount)}"
   df -hl "$mount_path" 2>/dev/null | awk 'NR==2 {print $5}' | tr -d '%' | cut -d. -f1
 }
 
@@ -408,12 +404,13 @@ get_temp_live() {
       echo "N/A"
     fi
   else
+    # Linux: ONLY look for battery temp in power_supply to maintain BMS semantics (Do NOT read CPU thermal_zone)
     local t_path
-    t_path="$(ls /sys/class/thermal/thermal_zone*/temp 2>/dev/null | head -n1 || true)"
+    t_path="$(ls /sys/class/power_supply/*/temp 2>/dev/null | head -n1 || true)"
     if [ -n "$t_path" ] && [ -f "$t_path" ]; then
       local raw
       raw="$(cat "$t_path" 2>/dev/null || echo 0)"
-      awk "BEGIN {printf \"%.1f\", $raw/1000}"
+      awk "BEGIN {printf \"%.1f\", $raw/10}"
     else
       echo "N/A"
     fi
@@ -703,19 +700,23 @@ build_consolidated_recommendation() {
 # --- Run Audit Output ---
 
 run_audit() {
-  local chip ram ssd swap_fmt disk_fmt temp_live temp_max temp_avg bat_pct bat_cycles swap_used_mb disk_pct_num bat_pct_num
+  local target_mount chip ram ssd swap_fmt disk_fmt temp_live temp_max temp_avg bat_pct bat_cycles swap_used_mb disk_pct_num bat_pct_num
+  
+  # Cache target mount to strictly minimize df process spawns
+  target_mount="$(get_target_mount)"
+  
   chip="$(get_chip_name)"
   ram="$(get_ram_gb)"
-  ssd="$(get_ssd_size)"
+  ssd="$(get_ssd_size "$target_mount")"
   swap_fmt="$(get_swap_formatted)"
-  disk_fmt="$(get_disk_formatted)"
+  disk_fmt="$(get_disk_formatted "$target_mount")"
   temp_live="$(get_temp_live)"
   temp_max="$(get_temp_max)"
   temp_avg="$(get_temp_avg)"
   bat_pct="$(get_battery_pct)"
   bat_cycles="$(get_battery_cycles)"
   swap_used_mb="$(get_swap_used_mb)"
-  disk_pct_num="$(get_disk_pct_num)"
+  disk_pct_num="$(get_disk_pct_num "$target_mount")"
   bat_pct_num="$(get_battery_pct_num)"
   [ -z "$swap_used_mb" ] && swap_used_mb=0
   [ -z "$disk_pct_num" ] && disk_pct_num=0
@@ -734,7 +735,11 @@ run_audit() {
     if [ "$bat_pct" != "N/A" ] && [ -n "$bat_pct" ]; then
       echo ""
       t sec_battery
-      pad_row "$(t label_temp_live)" "${temp_live} °C"
+      if [ "$temp_live" != "N/A" ]; then
+        pad_row "$(t label_temp_live)" "${temp_live} °C"
+      else
+        pad_row "$(t label_temp_live)" "N/A"
+      fi
       if [ "$temp_avg" != "N/A" ]; then
         pad_row "$(t label_temp_avg)" "${temp_avg} °C"
       else
@@ -757,25 +762,31 @@ run_audit() {
 }
 
 run_json() {
-  local chip ram ssd temp_live temp_max temp_avg swap_used_mb disk_pct_num bat_pct_num
+  local target_mount chip ram ssd temp_live temp_max temp_avg swap_used_mb disk_pct_num bat_pct_num
+  target_mount="$(get_target_mount)"
   chip="$(get_chip_name)"
   ram="$(get_ram_gb)"
-  ssd="$(get_ssd_size)"
+  ssd="$(get_ssd_size "$target_mount")"
   temp_live="$(get_temp_live)"
   temp_max="$(get_temp_max)"
   temp_avg="$(get_temp_avg)"
   swap_used_mb="$(get_swap_used_mb)"
-  disk_pct_num="$(get_disk_pct_num)"
+  disk_pct_num="$(get_disk_pct_num "$target_mount")"
   bat_pct_num="$(get_battery_pct_num)"
   [ -z "$swap_used_mb" ] && swap_used_mb=0
+
+  # Strict JSON escaping for potentially untrusted hardware string outputs
+  local json_chip="${chip//\"/\\\"}"
+  local json_ram="${ram//\"/\\\"}"
+  local json_ssd="${ssd//\"/\\\"}"
 
   cat <<EOF
 {
   "version": "${VERSION}",
   "os": "$(uname)",
-  "chip": "${chip}",
-  "ram": "${ram}",
-  "ssd": "${ssd}",
+  "chip": "${json_chip}",
+  "ram": "${json_ram}",
+  "ssd": "${json_ssd}",
   "swap_used_mb": ${swap_used_mb},
   "disk_used_pct": ${disk_pct_num},
   "battery_health_pct": "${bat_pct_num}",
