@@ -283,15 +283,13 @@ get_ram_gb() {
 
 get_ssd_size() {
   local mount_path="${1:-$(get_target_mount)}"
-  local raw_df
+  local kb gb
   
-  raw_df="$(df -hl "$mount_path" 2>/dev/null | awk 'NR==2 {print $2}')"
-  raw_df="${raw_df%Gi}"
-  raw_df="${raw_df%G}"
-  raw_df="${raw_df%Ti}"
-  raw_df="${raw_df%T}"
+  kb="$(df -P -k "$mount_path" 2>/dev/null | awk 'NR==2 {print $2}')"
+  [ -z "$kb" ] && kb=0
+  gb=$(( kb / 1048576 ))
 
-  echo "${raw_df} GB"
+  echo "${gb} GB"
 }
 
 get_swap_formatted() {
@@ -329,13 +327,13 @@ get_swap_formatted() {
 
 get_disk_formatted() {
   local mount_path="${1:-$(get_target_mount)}"
-  local used_df
+  local kb gb
   
-  used_df="$(df -hl "$mount_path" 2>/dev/null | awk 'NR==2 {print $3}')"
-  used_df="${used_df%Gi}"
-  used_df="${used_df%G}"
+  kb="$(df -P -k "$mount_path" 2>/dev/null | awk 'NR==2 {print $3}')"
+  [ -z "$kb" ] && kb=0
+  gb=$(( kb / 1048576 ))
 
-  echo "${used_df} GB"
+  echo "${gb} GB"
 }
 
 get_disk_pct_num() {
@@ -483,10 +481,10 @@ build_verdict_line_memory() {
 
   if [ "$swap_mb" -lt 500 ]; then
     case "$SS_LANG" in
-      zh-TW|zh-Hans) echo "  • $(t tag_pass) $(t name_memory)：未啟用虛擬記憶體（Swap 0 B）。" ;;
-      ja-JP) echo "  • $(t tag_pass) $(t name_memory)：仮想メモリは未使用です（Swap 0 B）。" ;;
-      ko-KR) echo "  • $(t tag_pass) $(t name_memory)：가상 메모리를 사용하지 않음（Swap 0 B）。" ;;
-      *) echo "  • $(t tag_pass) $(t name_memory): Virtual memory inactive (Swap 0 B)." ;;
+      zh-TW|zh-Hans) echo "  • $(t tag_pass) $(t name_memory)：未啟用虛擬記憶體（${swap_fmt}）。" ;;
+      ja-JP) echo "  • $(t tag_pass) $(t name_memory)：仮想メモリは未使用です（${swap_fmt}）。" ;;
+      ko-KR) echo "  • $(t tag_pass) $(t name_memory)：가상 메모리를 사용하지 않음（${swap_fmt}）。" ;;
+      *) echo "  • $(t tag_pass) $(t name_memory): Virtual memory inactive (${swap_fmt})." ;;
     esac
   elif [ "$swap_mb" -lt 3000 ]; then
     case "$SS_LANG" in
