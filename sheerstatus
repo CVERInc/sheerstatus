@@ -281,6 +281,18 @@ get_ram_gb() {
   fi
 }
 
+get_ram_mb() {
+  if [ "$(uname)" = "Darwin" ]; then
+    local bytes
+    bytes="$(sysctl -n hw.memsize 2>/dev/null || echo 0)"
+    echo $(( bytes / 1048576 ))
+  else
+    local kb
+    kb="$(awk '/MemTotal:/ {print $2}' /proc/meminfo 2>/dev/null || echo 0)"
+    echo $(( kb / 1024 ))
+  fi
+}
+
 get_ssd_size() {
   local mount_path="${1:-$(get_target_mount)}"
   local kb gb
@@ -475,11 +487,20 @@ get_swap_used_mb() {
 # --- Audit Verdict Builder ---
 
 build_verdict_line_memory() {
-  local swap_mb swap_fmt
+  local swap_mb swap_fmt ram_mb
   swap_mb="$1"
+  ram_mb="$2"
   swap_fmt="$(get_swap_formatted)"
 
-  if [ "$swap_mb" -lt 500 ]; then
+  # Future-proof ratio thresholds (5% and 20% of total physical RAM)
+  local pass_threshold=$(( ram_mb * 5 / 100 ))
+  local warn_threshold=$(( ram_mb * 20 / 100 ))
+
+  # Base sanity bounds for extreme low-end hardware
+  [ "$pass_threshold" -lt 200 ] && pass_threshold=200
+  [ "$warn_threshold" -lt 500 ] && warn_threshold=500
+
+  if [ "$swap_mb" -lt "$pass_threshold" ]; then
     case "$SS_LANG" in
       zh-TW|zh-Hans) echo "  • $(t tag_pass) $(t name_memory)：未啟用虛擬記憶體（${swap_fmt}）。" ;;
       ja-JP) echo "  • $(t tag_pass) $(t name_memory)：仮想メモリは未使用です（${swap_fmt}）。" ;;
@@ -564,14 +585,19 @@ build_verdict_line_battery() {
 }
 
 build_consolidated_recommendation() {
-  local swap_mb disk_pct bat_pct
+  local swap_mb disk_pct bat_pct ram_mb
   swap_mb="$1"
   disk_pct="$2"
   bat_pct="$3"
+  ram_mb="$4"
   [ -z "$bat_pct" ] || [ "$bat_pct" = "N/A" ] && bat_pct=100
 
+  # Future-proof ratio thresholds
+  local pass_threshold=$(( ram_mb * 5 / 100 ))
+  [ "$pass_threshold" -lt 200 ] && pass_threshold=200
+
   local need_ram=0 need_ssd=0 need_bat=0
-  [ "$swap_mb" -ge 500 ] && need_ram=1
+  [ "$swap_mb" -ge "$pass_threshold" ] && need_ram=1
   [ "$disk_pct" -ge 85 ] && need_ssd=1
   [ "$bat_pct" -lt 80 ] && need_bat=1
 
@@ -670,11 +696,12 @@ build_consolidated_recommendation() {
 # --- Run Audit Output ---
 
 run_audit() {
-  local target_mount chip ram ssd disk_fmt temp_live temp_max temp_avg bat_pct bat_cycles swap_used_mb disk_pct_num bat_pct_num
+  local target_mount chip ram ssd disk_fmt temp_live temp_max temp_avg bat_pct bat_cycles swap_used_mb disk_pct_num bat_pct_num ram_mb
   
   target_mount="$(get_target_mount)"
   chip="$(get_chip_name)"
   ram="$(get_ram_gb)"
+  ram_mb="$(get_ram_mb)"
   ssd="$(get_ssd_size "$target_mount")"
   disk_fmt="$(get_disk_formatted "$target_mount")"
   temp_live="$(get_temp_live)"
@@ -715,11 +742,11 @@ run_audit() {
     echo ""
     echo "------------------------------------------------------------"
     t verdict_title
-    build_verdict_line_memory "$swap_used_mb"
+    build_verdict_line_memory "$swap_used_mb" "$ram_mb"
     build_verdict_line_storage "$disk_pct_num"
     build_verdict_line_battery "$bat_pct_num"
     echo ""
-    build_consolidated_recommendation "$swap_used_mb" "$disk_pct_num" "$bat_pct_num"
+    build_consolidated_recommendation "$swap_used_mb" "$disk_pct_num" "$bat_pct_num" "$ram_mb"
     echo "============================================================"
   }
 }
