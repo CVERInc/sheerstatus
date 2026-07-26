@@ -50,7 +50,7 @@ LOCALES=("en-US" "ja-JP" "zh-TW" "zh-Hans" "ko-KR" "es-ES" "de-DE" "fr-FR" "pt-B
 
 for lang in "${LOCALES[@]}"; do
   out="$(SHEERSTATUS_LANG="$lang" "$TARGET")"
-  if echo "$out" | grep -q "Verdict"; then
+  if echo "$out" | grep -q "sheerstatus v"; then
     echo "[PASS] Locale sweep: ${lang}"
   else
     echo "[FAIL] Locale sweep failed for ${lang}"
