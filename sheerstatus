@@ -169,6 +169,19 @@ t() {
         pt-BR) echo "Espaço livre no disco Data" ;;
         *)     echo "Data Disk Free" ;;
       esac ;;
+    label_disk_fmt)
+      # $2 = avail, $3 = cap
+      case "$SS_LANG" in
+        ja-JP) echo "${2} 空き (${3} 使用中)" ;;
+        zh-TW) echo "${2} 可用 (${3} 已用)" ;;
+        zh-Hans) echo "${2} 可用 (${3} 已用)" ;;
+        ko-KR) echo "${2} 여유 (${3} 사용됨)" ;;
+        es-ES) echo "${2} libre (${3} usado)" ;;
+        de-DE) echo "${2} frei (${3} belegt)" ;;
+        fr-FR) echo "${2} libre (${3} utilisé)" ;;
+        pt-BR) echo "${2} livre (${3} usado)" ;;
+        *)     echo "${2} free (${3} used)" ;;
+      esac ;;
     verdict_healthy)
       case "$SS_LANG" in
         zh-TW) echo "🟢 系統非常健康。記憶體與儲存空間極為充裕，目前無任何升級需求。" ;;
@@ -245,7 +258,10 @@ get_temp_avg() {
 }
 
 get_disk_free() {
-  df -h /System/Volumes/Data 2>/dev/null | awk 'NR==2 {print $4 " (可用 " $5 " 已用)"}'
+  local avail cap
+  avail="$(df -h /System/Volumes/Data 2>/dev/null | awk 'NR==2 {print $4}')"
+  cap="$(df -h /System/Volumes/Data 2>/dev/null | awk 'NR==2 {print $5}')"
+  t label_disk_fmt "$avail" "$cap"
 }
 
 get_swap_used_mb() {
