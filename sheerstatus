@@ -577,53 +577,93 @@ build_consolidated_recommendation() {
   [ "$disk_pct" -ge 85 ] && need_ssd=1
   [ "$bat_pct" -lt 80 ] && need_bat=1
 
+  case "$SS_LANG" in
+    zh-TW|zh-Hans) echo "建議" ;;
+    ja-JP) echo "推奨" ;;
+    ko-KR) echo "권장" ;;
+    *) echo "Recommendation" ;;
+  esac
+
   if [ "$need_ram" -eq 0 ] && [ "$need_ssd" -eq 0 ] && [ "$need_bat" -eq 0 ]; then
     case "$SS_LANG" in
-      zh-TW|zh-Hans) echo "建議：硬體狀態極佳，目前完全無升級或換機需求。" ;;
-      ja-JP) echo "推奨：ハードウェア状態は非常に良好です。買い替えの必要はありません。" ;;
-      ko-KR) echo "권장: 하드웨어 상태가 매우 양호합니다. 현재 교체가 필요하지 않습니다." ;;
-      *) echo "Recommendation: Hardware is in excellent condition. No upgrade needed." ;;
+      zh-TW|zh-Hans) echo "  • 硬體狀態極佳，目前完全無升級或換機需求。" ;;
+      ja-JP) echo "  • ハードウェア状態は非常に良好です。買い替えの必要はありません。" ;;
+      ko-KR) echo "  • 하드웨어 상태가 매우 양호합니다. 현재 교체가 필요하지 않습니다." ;;
+      *) echo "  • Hardware is in excellent condition. No upgrade needed." ;;
     esac
   else
     case "$SS_LANG" in
       zh-TW|zh-Hans)
-        local rec="建議：若常感卡頓，下次換機請加大"
+        local rec="  • 若常感卡頓，下次換機請加大"
         if [ "$need_ram" -eq 1 ] && [ "$need_ssd" -eq 1 ]; then
-          rec="${rec}記憶體與硬碟容量。"
+          echo "${rec}記憶體與硬碟容量。"
         elif [ "$need_ram" -eq 1 ]; then
-          rec="${rec}記憶體。"
+          echo "${rec}記憶體。"
         elif [ "$need_ssd" -eq 1 ]; then
-          rec="${rec}硬碟容量。"
-        elif [ "$need_bat" -eq 1 ]; then
-          rec="建議：更換電池或規劃更換新電腦。"
+          echo "${rec}硬碟容量。"
         fi
-        echo "$rec"
+        
+        if [ "$need_bat" -eq 1 ]; then
+          echo "  • 請評估更換電池或規劃更換新電腦。"
+        fi
+        
+        if [ "$disk_pct" -ge 85 ]; then
+          echo "  • 可考慮使用 sheersweep 整理硬碟空間。"
+        fi
         ;;
       ja-JP)
-        local rec="推奨：日常の動作で遅延を感じる場合は、次回購入時に"
+        local rec="  • 日常の動作で遅延を感じる場合は、次回購入時に"
         if [ "$need_ram" -eq 1 ] && [ "$need_ssd" -eq 1 ]; then
-          rec="${rec}上位のメモリおよびストレージ容量を推奨します。"
+          echo "${rec}上位のメモリおよびストレージ容量を推奨します。"
         elif [ "$need_ram" -eq 1 ]; then
-          rec="${rec}上位のメモリ容量を推奨します。"
+          echo "${rec}上位のメモリ容量を推奨します。"
         elif [ "$need_ssd" -eq 1 ]; then
-          rec="${rec}上位のストレージ容量を推奨します。"
-        elif [ "$need_bat" -eq 1 ]; then
-          rec="推奨：バッテリー交換または新しい PC への買い替えを検討してください。"
+          echo "${rec}上位のストレージ容量を推奨します。"
         fi
-        echo "$rec"
+        
+        if [ "$need_bat" -eq 1 ]; then
+          echo "  • バッテリー交換または新しい PC への買い替えを検討してください。"
+        fi
+        
+        if [ "$disk_pct" -ge 85 ]; then
+          echo "  • sheersweep を使用してストレージを整理することを検討してください。"
+        fi
+        ;;
+      ko-KR)
+        local rec="  • 지속적인 지연이 발생하면 다음 기기 구매 시 "
+        if [ "$need_ram" -eq 1 ] && [ "$need_ssd" -eq 1 ]; then
+          echo "${rec}더 큰 RAM과 저장 공간을 고려하세요."
+        elif [ "$need_ram" -eq 1 ]; then
+          echo "${rec}더 큰 RAM을 고려하세요."
+        elif [ "$need_ssd" -eq 1 ]; then
+          echo "${rec}더 큰 저장 공간을 고려하세요."
+        fi
+        
+        if [ "$need_bat" -eq 1 ]; then
+          echo "  • 배터리 교체 또는 새 기기로의 업그레이드를 고려하세요."
+        fi
+        
+        if [ "$disk_pct" -ge 85 ]; then
+          echo "  • sheersweep을 사용하여 저장 공간을 확보하는 것을 고려하세요."
+        fi
         ;;
       *)
-        local rec="Recommendation: If lag persists, consider upgrading "
+        local rec="  • If lag persists, consider upgrading "
         if [ "$need_ram" -eq 1 ] && [ "$need_ssd" -eq 1 ]; then
-          rec="${rec}RAM and storage on your next machine."
+          echo "${rec}RAM and storage on your next machine."
         elif [ "$need_ram" -eq 1 ]; then
-          rec="${rec}RAM on your next machine."
+          echo "${rec}RAM on your next machine."
         elif [ "$need_ssd" -eq 1 ]; then
-          rec="${rec}storage on your next machine."
-        elif [ "$need_bat" -eq 1 ]; then
-          rec="Recommendation: Consider replacing the battery or upgrading to a new machine."
+          echo "${rec}storage on your next machine."
         fi
-        echo "$rec"
+        
+        if [ "$need_bat" -eq 1 ]; then
+          echo "  • Consider replacing the battery or upgrading to a new machine."
+        fi
+        
+        if [ "$disk_pct" -ge 85 ]; then
+          echo "  • Consider using sheersweep to free up disk space."
+        fi
         ;;
     esac
   fi
