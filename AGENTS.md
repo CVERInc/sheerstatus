@@ -17,7 +17,7 @@ sheerstatus --version    # Print version
 SHEERSTATUS_LANG=zh-TW sheerstatus  # Force specific locale
 ```
 
-Locale is auto-detected; force it with `SHEERSTATUS_LANG=en-US|ja-JP|zh-TW|zh-Hans`.
+Locale is auto-detected; force it with `SHEERSTATUS_LANG=en-US|ja-JP|zh-TW|zh-Hans|ko-KR|es-ES|de-DE|fr-FR|pt-BR`.
 
 ## Core Guidelines
 

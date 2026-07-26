@@ -33,7 +33,7 @@ chmod +x sheerstatus
 
 - ⚡ **Zero Background Daemons**: Runs only when you invoke it. Uses 0 MB of RAM while idle.
 - 🔒 **Zero Dependencies**: Pure POSIX/Bash script. Uses native macOS utilities (`sysctl`, `ioreg`, `vm_stat`, `df`).
-- 🌐 **Multi-Language (i18n)**: Auto-detects system locale (`zh-TW`, `en-US`, `ja-JP`, `zh-Hans`). Override anytime with `SHEERSTATUS_LANG`.
+- 🌐 **Multi-Language (i18n)**: Auto-detects system locale (`en-US`, `ja-JP`, `zh-TW`, `zh-Hans`, `ko-KR`, `es-ES`, `de-DE`, `fr-FR`, `pt-BR`). Override anytime with `SHEERSTATUS_LANG`.
 - 📊 **Lifetime Hardware History**: Extracts lifetime battery/chassis average & maximum temperatures recorded by Apple's BMS IC.
 - ⚖️ **Objective Verdict**: Neutral, hard-data classifier (`🟢 Healthy`, `🟡 Warning`, `🔴 Critical`) that never assumes purchase channels or promotion eligibility.
 

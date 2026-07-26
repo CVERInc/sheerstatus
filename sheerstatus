@@ -14,7 +14,7 @@ set -u
 VERSION="0.1.0"
 
 # ============================================================================
-# i18n — en-US · ja-JP · zh-TW · zh-Hans.
+# i18n — en-US · ja-JP · zh-TW · zh-Hans · ko-KR · es-ES · de-DE · fr-FR · pt-BR.
 # Auto-detected; override with SHEERSTATUS_LANG.
 # ============================================================================
 ss_resolve_lang() {
@@ -24,6 +24,11 @@ ss_resolve_lang() {
     ja*|*ja_JP*|*ja-JP*)                        echo "ja-JP" ;;
     *zh*Hant*|*zh_TW*|*zh-TW*|*zh_HK*|*zh-HK*)  echo "zh-TW" ;;
     zh*|*zh_CN*|*zh-CN*|*zh_SG*|*zh*Hans*)      echo "zh-Hans" ;;
+    ko*|*ko_KR*|*ko-KR*)                        echo "ko-KR" ;;
+    es*|*es_ES*|*es-ES*|*es_419*)               echo "es-ES" ;;
+    de*|*de_DE*|*de-DE*)                        echo "de-DE" ;;
+    fr*|*fr_FR*|*fr-FR*|*fr_CA*)                echo "fr-FR" ;;
+    pt*|*pt_BR*|*pt-BR*|*pt_PT*)                echo "pt-BR" ;;
     *)                                          echo "en-US" ;;
   esac
 }
@@ -37,6 +42,11 @@ t() {
         ja-JP) echo "🖥️  sheerstatus v${VERSION} — Mac ハードウェア＆買替診断" ;;
         zh-TW) echo "🖥️  sheerstatus v${VERSION} —— Mac 硬體健康與換機診斷" ;;
         zh-Hans) echo "🖥️  sheerstatus v${VERSION} —— Mac 硬件健康与换机诊断" ;;
+        ko-KR) echo "🖥️  sheerstatus v${VERSION} — Mac 하드웨어 및 교체 진단" ;;
+        es-ES) echo "🖥️  sheerstatus v${VERSION} — Auditoría de hardware y actualización de Mac" ;;
+        de-DE) echo "🖥️  sheerstatus v${VERSION} — Mac Hardware- & Aufrüstungsdiagnose" ;;
+        fr-FR) echo "🖥️  sheerstatus v${VERSION} — Diagnostic matériel et de mise à niveau Mac" ;;
+        pt-BR) echo "🖥️  sheerstatus v${VERSION} — Auditoria de hardware e substituição de Mac" ;;
         *)     echo "🖥️  sheerstatus v${VERSION} — Mac Hardware & Pre-Upgrade Auditor" ;;
       esac ;;
     sec_memory)
@@ -44,6 +54,11 @@ t() {
         ja-JP) echo "【メモリ＆ Swap 現況】" ;;
         zh-TW) echo "【記憶體與 Swap 現況】" ;;
         zh-Hans) echo "【内存与 Swap 现况】" ;;
+        ko-KR) echo "【메모리 및 Swap 현황】" ;;
+        es-ES) echo "【Memoria y presión de Swap】" ;;
+        de-DE) echo "【Arbeitsspeicher- & Swap-Druck】" ;;
+        fr-FR) echo "【Mémoire et pression du Swap】" ;;
+        pt-BR) echo "【Memória e pressão de Swap】" ;;
         *)     echo "【Memory & Swap Pressure】" ;;
       esac ;;
     sec_thermal)
@@ -51,6 +66,11 @@ t() {
         ja-JP) echo "【温度＆サーマル履歴】" ;;
         zh-TW) echo "【溫度與熱壓力歷史】" ;;
         zh-Hans) echo "【温度与热压力历史】" ;;
+        ko-KR) echo "【온도 및 열 이력】" ;;
+        es-ES) echo "【Historial térmico y de temperatura】" ;;
+        de-DE) echo "【Temperatur- & Thermohistorie】" ;;
+        fr-FR) echo "【Historique thermique et de température】" ;;
+        pt-BR) echo "【Histórico térmico e de temperatura】" ;;
         *)     echo "【Thermal & Temperature History】" ;;
       esac ;;
     sec_disk)
@@ -58,6 +78,11 @@ t() {
         ja-JP) echo "【ストレージ＆ SSD ライフ】" ;;
         zh-TW) echo "【儲存空間與 SSD 壽命】" ;;
         zh-Hans) echo "【存储空间与 SSD 寿命】" ;;
+        ko-KR) echo "【저장 공간 및 SSD 수명】" ;;
+        es-ES) echo "【Almacenamiento y vida útil del SSD】" ;;
+        de-DE) echo "【Speicher & SSD-Lebensdauer】" ;;
+        fr-FR) echo "【Stockage et durée de vie du SSD】" ;;
+        pt-BR) echo "【Armazenamento e vida útil do SSD】" ;;
         *)     echo "【Storage & SSD Lifespan】" ;;
       esac ;;
     verdict_title)
@@ -65,6 +90,11 @@ t() {
         ja-JP) echo "【診断結果（Verdict）】" ;;
         zh-TW) echo "【裁決報告（Verdict）】" ;;
         zh-Hans) echo "【裁决报告（Verdict）】" ;;
+        ko-KR) echo "【진단 보고서 (Verdict)】" ;;
+        es-ES) echo "【Veredicto del diagnóstico】" ;;
+        de-DE) echo "【Diagnose-Urteil】" ;;
+        fr-FR) echo "【Verdict du diagnostic】" ;;
+        pt-BR) echo "【Veredito do diagnóstico】" ;;
         *)     echo "【Audit Verdict】" ;;
       esac ;;
     verdict_healthy)
@@ -72,6 +102,11 @@ t() {
         zh-TW) echo "🟢 系統非常健康。記憶體與儲存空間極為充裕，目前無任何升級需求。" ;;
         ja-JP) echo "🟢 システムは非常に健康です。メモリとストレージは十分であり、買い替えの必要はありません。" ;;
         zh-Hans) echo "🟢 系统非常健康。内存与存储空间极其充裕，目前无任何升级需求。" ;;
+        ko-KR) echo "🟢 시스템이 매우 정상입니다. 메모리와 저장 공간이 충분하여 현재 교체할 필요가 없습니다." ;;
+        es-ES) echo "🟢 El sistema está extremadamente saludable. Memoria y almacenamiento amplios. No se requiere actualización." ;;
+        de-DE) echo "🟢 Das System ist äußerst gesund. Reichlich Arbeitsspeicher und Speicherplatz vorhanden. Kein Upgrade erforderlich." ;;
+        fr-FR) echo "🟢 Le système est en excellente santé. Mémoire et stockage amplement suffisants. Aucune mise à niveau requise." ;;
+        pt-BR) echo "🟢 O sistema está extremamente saudável. Memória e armazenamento amplos. Nenhuma substituição é necessária." ;;
         *)     echo "🟢 System is extremely healthy. Ample memory and storage available. No upgrade needed." ;;
       esac ;;
     verdict_warning)
@@ -79,6 +114,11 @@ t() {
         zh-TW) echo "🟡 記憶體壓力或 Swap 開始吃緊。若工作時常態感覺微延遲，建議未來選購時升級記憶體（建議 24GB+）。" ;;
         ja-JP) echo "🟡 メモリまたは Swap が混雑しています。日常の動作で遅延を感じる場合は、次回購入時にメモリ増設（24GB以上）を推奨します。" ;;
         zh-Hans) echo "🟡 内存压力或 Swap 开始吃紧。若工作时常态感觉微延迟，建议未来选购时升级内存（建议 24GB+）。" ;;
+        ko-KR) echo "🟡 메모리 또는 Swap에 부하가 걸리고 있습니다. 지연이 지속되면 다음 기기 구매 시 메모리(24GB 이상) 업그레이드를 권장합니다." ;;
+        es-ES) echo "🟡 La memoria o el Swap están ajustados. Considere optar por más memoria (24GB+) en su próxima máquina si persiste el retraso." ;;
+        de-DE) echo "🟡 Arbeitsspeicher oder Swap wird knapp. Erwägen Sie bei Ihrem nächsten Mac mehr RAM (24GB+), falls Verzögerungen auftreten." ;;
+        fr-FR) echo "🟡 La mémoire ou le Swap devient restreint. Envisagez plus de RAM (24 Go+) sur votre prochaine machine si les ralentissements persistent." ;;
+        pt-BR) echo "🟡 A memória ou o Swap estão ficando limitados. Considere mais RAM (24GB+) em sua próxima máquina se o atraso persistir." ;;
         *)     echo "🟡 Memory or Swap is getting tight. Consider opting for higher RAM (24GB+) on your next machine if lag persists." ;;
       esac ;;
     verdict_critical)
@@ -86,6 +126,11 @@ t() {
         zh-TW) echo "🔴 記憶體或儲存空間嚴重赤字！系統正面臨高強度 Swap 換頁與磁碟擠壓，建議規劃更換更高規格之 Mac。" ;;
         ja-JP) echo "🔴 メモリまたはストレージが深刻な不足状態です。高スペックな Mac への買い替えを推奨します。" ;;
         zh-Hans) echo "🔴 内存或存储空间严重赤字！系统正面临高强度 Swap 换页与磁盘挤压，建议规划更换更高规格之 Mac。" ;;
+        ko-KR) echo "🔴 메모리 또는 저장 공간이 심각하게 부족합니다! 더 높은 사양의 Mac으로 교체를 권장합니다." ;;
+        es-ES) echo "🔴 ¡Déficit grave de memoria o almacenamiento! Se detectó una presión severa de swap o disco. Se recomienda actualizar a un Mac de mayor especificación." ;;
+        de-DE) echo "🔴 Schwerwiegendes Arbeitsspeicher- oder Speicherdefizit! Starker Swap- oder Festplattendruck erkannt. Ein Upgrade auf einen leistungsstärkeren Mac wird empfohlen." ;;
+        fr-FR) echo "🔴 Déficit important de mémoire ou de stockage ! Une pression sévère du Swap ou du disque a été détectée. La mise à niveau vers un Mac plus performant est recommandée." ;;
+        pt-BR) echo "🔴 Déficit grave de memória ou armazenamento! Pressão severa de swap ou disco detectada. Recomenda-se a substituição por um Mac de maior especificação." ;;
         *)     echo "🔴 Heavy memory or storage deficit! Severe swap or disk pressure detected. Upgrading to a higher-spec Mac is recommended." ;;
       esac ;;
   esac
