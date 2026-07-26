@@ -364,7 +364,7 @@ get_temp_live() {
     fi
   else
     local t_path
-    t_path="$(ls /sys/class/power_supply/*/temp 2>/dev/null | head -n1 || true)"
+    t_path="$(ls /sys/class/power_supply/BAT*/temp /sys/class/power_supply/macsmc-battery/temp 2>/dev/null | head -n1 || true)"
     if [ -n "$t_path" ] && [ -f "$t_path" ]; then
       local raw
       raw="$(cat "$t_path" 2>/dev/null || echo 0)"
@@ -422,17 +422,28 @@ get_battery_pct() {
       fi
     fi
   else
-    local caps=0 count=0 cap
-    for cap_path in /sys/class/power_supply/*/capacity; do
-      if [ -f "$cap_path" ]; then
-        cap="$(cat "$cap_path" 2>/dev/null || echo 0)"
-        caps=$(( caps + cap ))
-        count=$(( count + 1 ))
+    local health_pct=0 count=0
+    for bat_path in /sys/class/power_supply/BAT* /sys/class/power_supply/macsmc-battery; do
+      if [ -d "$bat_path" ]; then
+        local full=0 full_design=0
+        if [ -f "$bat_path/energy_full" ] && [ -f "$bat_path/energy_full_design" ]; then
+          full="$(cat "$bat_path/energy_full" 2>/dev/null || echo 0)"
+          full_design="$(cat "$bat_path/energy_full_design" 2>/dev/null || echo 0)"
+        elif [ -f "$bat_path/charge_full" ] && [ -f "$bat_path/charge_full_design" ]; then
+          full="$(cat "$bat_path/charge_full" 2>/dev/null || echo 0)"
+          full_design="$(cat "$bat_path/charge_full_design" 2>/dev/null || echo 0)"
+        fi
+
+        if [ -n "$full_design" ] && [ "$full_design" -gt 0 ]; then
+          local pct=$(( full * 100 / full_design ))
+          [ "$pct" -gt 100 ] && pct=100
+          health_pct=$(( health_pct + pct ))
+          count=$(( count + 1 ))
+        fi
       fi
     done
     if [ "$count" -gt 0 ]; then
-      local avg_cap=$(( caps / count ))
-      echo "${avg_cap}%"
+      echo "$(( health_pct / count ))%"
     else
       echo "N/A"
     fi
@@ -454,7 +465,7 @@ get_battery_cycles() {
     fi
   else
     local total_cycles=0 count=0 cyc
-    for cyc_path in /sys/class/power_supply/*/cycle_count; do
+    for cyc_path in /sys/class/power_supply/BAT*/cycle_count /sys/class/power_supply/macsmc-battery/cycle_count; do
       if [ -f "$cyc_path" ]; then
         cyc="$(cat "$cyc_path" 2>/dev/null || echo 0)"
         if [ "$cyc" -gt 0 ]; then
@@ -509,17 +520,17 @@ build_verdict_line_memory() {
     esac
   elif [ "$swap_mb" -lt 3000 ]; then
     case "$SS_LANG" in
-      zh-TW|zh-Hans) echo "  • $(t tag_warn) $(t name_memory)：已開始將硬碟當作虛擬記憶體（已用 ${swap_fmt}）。" ;;
-      ja-JP) echo "  • $(t tag_warn) $(t name_memory)：ストレージを仮想メモリとして使用し始めました（使用済み ${swap_fmt}）。" ;;
-      ko-KR) echo "  • $(t tag_warn) $(t name_memory)：스토리지를 가상 메모리로 사용하기 시작함（사용됨 ${swap_fmt}）。" ;;
-      *) echo "  • $(t tag_warn) $(t name_memory): Started using disk as virtual memory (${swap_fmt} used)." ;;
+      zh-TW|zh-Hans) echo "  • $(t tag_warn) $(t name_memory)：已開始將硬碟當作虛擬記憶體（Swap ${swap_fmt}）。" ;;
+      ja-JP) echo "  • $(t tag_warn) $(t name_memory)：ストレージを仮想メモリとして使用し始めました（Swap ${swap_fmt}）。" ;;
+      ko-KR) echo "  • $(t tag_warn) $(t name_memory)：스토리지를 가상 메모리로 사용하기 시작함（Swap ${swap_fmt}）。" ;;
+      *) echo "  • $(t tag_warn) $(t name_memory): Started using disk as virtual memory (Swap ${swap_fmt})." ;;
     esac
   else
     case "$SS_LANG" in
-      zh-TW|zh-Hans) echo "  • $(t tag_crit) $(t name_memory)：虛擬記憶體持續大量讀寫硬碟，將導致折壽（已用 ${swap_fmt}）。" ;;
-      ja-JP) echo "  • $(t tag_crit) $(t name_memory)：仮想メモリによるストレージの大量読み書きは寿命を縮めます（使用済み ${swap_fmt}）。" ;;
-      ko-KR) echo "  • $(t tag_crit) $(t name_memory)：가상 메모리의 과도한 스토리지 읽기/쓰기는 수명을 단축시킴（사용됨 ${swap_fmt}）。" ;;
-      *) echo "  • $(t tag_crit) $(t name_memory): Heavy virtual memory thrashing will degrade disk lifespan (${swap_fmt} used)." ;;
+      zh-TW|zh-Hans) echo "  • $(t tag_crit) $(t name_memory)：虛擬記憶體持續大量讀寫硬碟，將導致折壽（Swap ${swap_fmt}）。" ;;
+      ja-JP) echo "  • $(t tag_crit) $(t name_memory)：仮想メモリによるストレージの大量読み書きは寿命を縮めます（Swap ${swap_fmt}）。" ;;
+      ko-KR) echo "  • $(t tag_crit) $(t name_memory)：가상 메모리의 과도한 스토리지 읽기/쓰기는 수명을 단축시킴（Swap ${swap_fmt}）。" ;;
+      *) echo "  • $(t tag_crit) $(t name_memory): Heavy virtual memory thrashing will degrade disk lifespan (Swap ${swap_fmt})." ;;
     esac
   fi
 }
