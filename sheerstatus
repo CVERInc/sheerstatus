@@ -158,6 +158,17 @@ t() {
         pt-BR) echo "Ciclos" ;;
         *)     echo "Cycle Count" ;;
       esac ;;
+    label_capacity)
+      case "$SS_LANG" in
+        ja-JP) echo "容量" ;;
+        zh-TW|zh-Hans) echo "容量" ;;
+        ko-KR) echo "용량" ;;
+        es-ES) echo "Capacidad" ;;
+        de-DE) echo "Kapazität" ;;
+        fr-FR) echo "Capacité" ;;
+        pt-BR) echo "Capacidade" ;;
+        *)     echo "Capacity" ;;
+      esac ;;
     tag_pass)
       case "$SS_LANG" in
         ja-JP) echo "[良好]" ;;
@@ -385,7 +396,7 @@ get_temp_live() {
 get_temp_max() {
   if [ "$(uname)" = "Darwin" ]; then
     local raw
-    raw="$(ioreg -rn AppleSmartBattery 2>/dev/null | grep -o '"MaximumTemperature"=[0-9]*' | cut -d= -f2 | head -n1 || true)"
+    raw="$(ioreg -rn AppleSmartBattery 2>/dev/null | tr -d ' ' | grep -o '"MaximumTemperature"=[0-9]*' | cut -d= -f2 | head -n1 || true)"
     if [ -n "$raw" ]; then
       echo "${raw} °C"
     else
@@ -399,7 +410,7 @@ get_temp_max() {
 get_temp_avg() {
   if [ "$(uname)" = "Darwin" ]; then
     local raw
-    raw="$(ioreg -rn AppleSmartBattery 2>/dev/null | grep -o '"AverageTemperature"=[0-9]*' | cut -d= -f2 | head -n1 || true)"
+    raw="$(ioreg -rn AppleSmartBattery 2>/dev/null | tr -d ' ' | grep -o '"AverageTemperature"=[0-9]*' | cut -d= -f2 | head -n1 || true)"
     if [ -n "$raw" ]; then
       awk "BEGIN {printf \"%.1f\", $raw/10}"
     else
@@ -413,15 +424,15 @@ get_temp_avg() {
 get_battery_pct() {
   if [ "$(uname)" = "Darwin" ]; then
     local raw_max max_cap design_cap
-    raw_max="$(ioreg -rn AppleSmartBattery 2>/dev/null | grep -o '"AppleRawMaxCapacity"=[0-9]*' | cut -d= -f2 | head -n1 || true)"
-    design_cap="$(ioreg -rn AppleSmartBattery 2>/dev/null | grep -o '"DesignCapacity"=[0-9]*' | cut -d= -f2 | head -n1 || true)"
+    raw_max="$(ioreg -rn AppleSmartBattery 2>/dev/null | tr -d ' ' | grep -o '"AppleRawMaxCapacity"=[0-9]*' | cut -d= -f2 | head -n1 || true)"
+    design_cap="$(ioreg -rn AppleSmartBattery 2>/dev/null | tr -d ' ' | grep -o '"DesignCapacity"=[0-9]*' | cut -d= -f2 | head -n1 || true)"
     
     if [ -n "$raw_max" ] && [ -n "$design_cap" ] && [ "$design_cap" -gt 0 ]; then
       local pct=$(( raw_max * 100 / design_cap ))
       [ "$pct" -gt 100 ] && pct=100
       echo "${pct}%"
     else
-      max_cap="$(ioreg -rn AppleSmartBattery 2>/dev/null | grep -o '"MaxCapacity"=[0-9]*' | cut -d= -f2 | head -n1 || true)"
+      max_cap="$(ioreg -rn AppleSmartBattery 2>/dev/null | tr -d ' ' | grep -o '"MaxCapacity"=[0-9]*' | cut -d= -f2 | head -n1 || true)"
       if [ -n "$max_cap" ]; then
         echo "${max_cap}%"
       else
@@ -457,6 +468,52 @@ get_battery_pct() {
   fi
 }
 
+get_battery_capacity_string() {
+  if [ "$(uname)" = "Darwin" ]; then
+    local raw_max design_cap
+    raw_max="$(ioreg -rn AppleSmartBattery 2>/dev/null | tr -d ' ' | grep -o '"AppleRawMaxCapacity"=[0-9]*' | cut -d= -f2 | head -n1 || true)"
+    design_cap="$(ioreg -rn AppleSmartBattery 2>/dev/null | tr -d ' ' | grep -o '"DesignCapacity"=[0-9]*' | cut -d= -f2 | head -n1 || true)"
+    
+    if [ -n "$raw_max" ] && [ -n "$design_cap" ] && [ "$design_cap" -gt 0 ]; then
+      echo "${raw_max} / ${design_cap} mAh"
+    else
+      echo "N/A"
+    fi
+  else
+    local total_full=0 total_design=0 is_energy=0 count=0
+    for bat_path in /sys/class/power_supply/*; do
+      if [ -d "$bat_path" ] && [ "$(cat "$bat_path/type" 2>/dev/null)" = "Battery" ]; then
+        local full=0 full_design=0
+        if [ -f "$bat_path/energy_full" ] && [ -f "$bat_path/energy_full_design" ]; then
+          full="$(cat "$bat_path/energy_full" 2>/dev/null || echo 0)"
+          full_design="$(cat "$bat_path/energy_full_design" 2>/dev/null || echo 0)"
+          is_energy=1
+        elif [ -f "$bat_path/charge_full" ] && [ -f "$bat_path/charge_full_design" ]; then
+          full="$(cat "$bat_path/charge_full" 2>/dev/null || echo 0)"
+          full_design="$(cat "$bat_path/charge_full_design" 2>/dev/null || echo 0)"
+        fi
+
+        if [ -n "$full_design" ] && [ "$full_design" -gt 0 ]; then
+          total_full=$(( total_full + full ))
+          total_design=$(( total_design + full_design ))
+          count=$(( count + 1 ))
+        fi
+      fi
+    done
+    if [ "$count" -gt 0 ]; then
+      local val_full=$(( total_full / 1000 ))
+      local val_design=$(( total_design / 1000 ))
+      if [ "$is_energy" -eq 1 ]; then
+        echo "${val_full} / ${val_design} mWh"
+      else
+        echo "${val_full} / ${val_design} mAh"
+      fi
+    else
+      echo "N/A"
+    fi
+  fi
+}
+
 get_battery_pct_num() {
   get_battery_pct | tr -d '%' | cut -d. -f1
 }
@@ -464,7 +521,7 @@ get_battery_pct_num() {
 get_battery_cycles() {
   if [ "$(uname)" = "Darwin" ]; then
     local cycle_cnt
-    cycle_cnt="$(ioreg -rn AppleSmartBattery 2>/dev/null | grep -o '"CycleCount"=[0-9]*' | cut -d= -f2 | head -n1 || true)"
+    cycle_cnt="$(ioreg -rn AppleSmartBattery 2>/dev/null | tr -d ' ' | grep -o '"CycleCount"=[0-9]*' | cut -d= -f2 | head -n1 || true)"
     if [ -n "$cycle_cnt" ]; then
       echo "${cycle_cnt}"
     else
@@ -747,18 +804,25 @@ run_audit() {
     if [ "$bat_pct" != "N/A" ] && [ -n "$bat_pct" ]; then
       echo ""
       t sec_battery
+      
+      local cap_str
+      cap_str="$(get_battery_capacity_string)"
+      if [ "$cap_str" != "N/A" ]; then
+        pad_row "$(t label_capacity)" "${cap_str}"
+      fi
+
       if [ "$temp_live" != "N/A" ]; then
         pad_row "$(t label_temp_live)" "${temp_live} °C"
-      else
-        pad_row "$(t label_temp_live)" "N/A"
       fi
       if [ "$temp_avg" != "N/A" ]; then
         pad_row "$(t label_temp_avg)" "${temp_avg} °C"
-      else
-        pad_row "$(t label_temp_avg)" "N/A"
       fi
-      pad_row "$(t label_temp_max)" "${temp_max}"
-      pad_row "$(t label_cycles)" "${bat_cycles}"
+      if [ "$temp_max" != "N/A" ]; then
+        pad_row "$(t label_temp_max)" "${temp_max}"
+      fi
+      if [ "$bat_cycles" != "N/A" ]; then
+        pad_row "$(t label_cycles)" "${bat_cycles}"
+      fi
     fi
     echo ""
     echo "------------------------------------------------------------"
