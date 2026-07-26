@@ -67,8 +67,7 @@ t() {
     sec_storage)
       case "$SS_LANG" in
         ja-JP) echo "ストレージ" ;;
-        zh-TW) echo "儲存" ;;
-        zh-Hans) echo "存储" ;;
+        zh-TW|zh-Hans) echo "硬碟" ;;
         ko-KR) echo "저장 공간" ;;
         es-ES) echo "Almacenamiento" ;;
         de-DE) echo "Speicher" ;;
@@ -193,7 +192,7 @@ t() {
     name_storage)
       case "$SS_LANG" in
         ja-JP) echo "ストレージ" ;;
-        zh-TW|zh-Hans) echo "儲存" ;;
+        zh-TW|zh-Hans) echo "硬碟" ;;
         ko-KR) echo "저장 공간" ;;
         es-ES) echo "Almacenamiento" ;;
         de-DE) echo "Speicher" ;;
@@ -590,11 +589,11 @@ build_consolidated_recommendation() {
       zh-TW|zh-Hans)
         local rec="建議：若常感卡頓，下次換機請加大"
         if [ "$need_ram" -eq 1 ] && [ "$need_ssd" -eq 1 ]; then
-          rec="${rec}記憶體與儲存容量。"
+          rec="${rec}記憶體與硬碟容量。"
         elif [ "$need_ram" -eq 1 ]; then
           rec="${rec}記憶體。"
         elif [ "$need_ssd" -eq 1 ]; then
-          rec="${rec}儲存容量。"
+          rec="${rec}硬碟容量。"
         elif [ "$need_bat" -eq 1 ]; then
           rec="建議：更換電池或規劃更換新電腦。"
         fi
