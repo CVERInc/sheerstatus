@@ -363,8 +363,15 @@ get_temp_live() {
       echo "N/A"
     fi
   else
-    local t_path
-    t_path="$(ls /sys/class/power_supply/BAT*/temp /sys/class/power_supply/macsmc-battery/temp 2>/dev/null | head -n1 || true)"
+    local t_path=""
+    for bat_path in /sys/class/power_supply/*; do
+      if [ -d "$bat_path" ] && [ "$(cat "$bat_path/type" 2>/dev/null)" = "Battery" ]; then
+        if [ -f "$bat_path/temp" ]; then
+          t_path="$bat_path/temp"
+          break
+        fi
+      fi
+    done
     if [ -n "$t_path" ] && [ -f "$t_path" ]; then
       local raw
       raw="$(cat "$t_path" 2>/dev/null || echo 0)"
@@ -423,8 +430,8 @@ get_battery_pct() {
     fi
   else
     local health_pct=0 count=0
-    for bat_path in /sys/class/power_supply/BAT* /sys/class/power_supply/macsmc-battery; do
-      if [ -d "$bat_path" ]; then
+    for bat_path in /sys/class/power_supply/*; do
+      if [ -d "$bat_path" ] && [ "$(cat "$bat_path/type" 2>/dev/null)" = "Battery" ]; then
         local full=0 full_design=0
         if [ -f "$bat_path/energy_full" ] && [ -f "$bat_path/energy_full_design" ]; then
           full="$(cat "$bat_path/energy_full" 2>/dev/null || echo 0)"
@@ -465,12 +472,15 @@ get_battery_cycles() {
     fi
   else
     local total_cycles=0 count=0 cyc
-    for cyc_path in /sys/class/power_supply/BAT*/cycle_count /sys/class/power_supply/macsmc-battery/cycle_count; do
-      if [ -f "$cyc_path" ]; then
-        cyc="$(cat "$cyc_path" 2>/dev/null || echo 0)"
-        if [ "$cyc" -gt 0 ]; then
-          total_cycles=$(( total_cycles + cyc ))
-          count=$(( count + 1 ))
+    for bat_path in /sys/class/power_supply/*; do
+      if [ -d "$bat_path" ] && [ "$(cat "$bat_path/type" 2>/dev/null)" = "Battery" ]; then
+        local cyc_path="$bat_path/cycle_count"
+        if [ -f "$cyc_path" ]; then
+          cyc="$(cat "$cyc_path" 2>/dev/null || echo 0)"
+          if [ "$cyc" -gt 0 ]; then
+            total_cycles=$(( total_cycles + cyc ))
+            count=$(( count + 1 ))
+          fi
         fi
       fi
     done
