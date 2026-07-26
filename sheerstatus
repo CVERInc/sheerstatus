@@ -11,7 +11,7 @@
 #
 set -u
 
-VERSION="0.2.0"
+VERSION="0.2.1"
 
 # ============================================================================
 # i18n — en-US · ja-JP · zh-TW · zh-Hans · ko-KR · es-ES · de-DE · fr-FR · pt-BR.
@@ -253,7 +253,7 @@ get_swap() {
 
 get_temp_live() {
   local raw
-  raw="$(ioreg -rn AppleSmartBattery 2>/dev/null | grep -o '"Temperature"=[0-9]*' | cut -d= -f2 || true)"
+  raw="$(ioreg -rn AppleSmartBattery 2>/dev/null | awk -F'= ' '/"Temperature" =/ {print $2}' | head -n1)"
   if [ -n "$raw" ]; then
     awk "BEGIN {printf \"%.1f\", $raw/100}"
   else
@@ -263,7 +263,7 @@ get_temp_live() {
 
 get_temp_max() {
   local raw
-  raw="$(ioreg -rn AppleSmartBattery 2>/dev/null | grep -o '"MaximumTemperature"=[0-9]*' | cut -d= -f2 || true)"
+  raw="$(ioreg -rn AppleSmartBattery 2>/dev/null | grep -o '"MaximumTemperature"=[0-9]*' | cut -d= -f2 | head -n1 || true)"
   if [ -n "$raw" ]; then
     echo "${raw} °C"
   else
@@ -273,7 +273,7 @@ get_temp_max() {
 
 get_temp_avg() {
   local raw
-  raw="$(ioreg -rn AppleSmartBattery 2>/dev/null | grep -o '"AverageTemperature"=[0-9]*' | cut -d= -f2 || true)"
+  raw="$(ioreg -rn AppleSmartBattery 2>/dev/null | grep -o '"AverageTemperature"=[0-9]*' | cut -d= -f2 | head -n1 || true)"
   if [ -n "$raw" ]; then
     awk "BEGIN {printf \"%.1f\", $raw/10}"
   else
