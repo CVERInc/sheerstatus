@@ -11,7 +11,7 @@
 #
 set -u
 
-VERSION="0.6.4"
+VERSION="0.6.5"
 
 # ============================================================================
 # i18n — en-US · ja-JP · zh-TW · zh-Hans · ko-KR · es-ES · de-DE · fr-FR · pt-BR.
