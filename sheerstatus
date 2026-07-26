@@ -51,51 +51,51 @@ t() {
       esac ;;
     sec_memory)
       case "$SS_LANG" in
-        ja-JP) echo "【メモリ＆ Swap 現況】" ;;
-        zh-TW) echo "【記憶體與 Swap 現況】" ;;
-        zh-Hans) echo "【内存与 Swap 现况】" ;;
-        ko-KR) echo "【메모리 및 Swap 현황】" ;;
-        es-ES) echo "【Memoria y presión de Swap】" ;;
-        de-DE) echo "【Arbeitsspeicher- & Swap-Druck】" ;;
-        fr-FR) echo "【Mémoire et pression du Swap】" ;;
-        pt-BR) echo "【Memória e pressão de Swap】" ;;
-        *)     echo "【Memory & Swap Pressure】" ;;
+        ja-JP) echo "メモリ＆ Swap 現況" ;;
+        zh-TW) echo "記憶體與 Swap 現況" ;;
+        zh-Hans) echo "内存与 Swap 现况" ;;
+        ko-KR) echo "메모리 및 Swap 현황" ;;
+        es-ES) echo "Memoria y presión de Swap" ;;
+        de-DE) echo "Arbeitsspeicher- & Swap-Druck" ;;
+        fr-FR) echo "Mémoire et pression du Swap" ;;
+        pt-BR) echo "Memória e pressão de Swap" ;;
+        *)     echo "Memory & Swap Pressure" ;;
       esac ;;
     sec_thermal)
       case "$SS_LANG" in
-        ja-JP) echo "【温度＆サーマル履歴】" ;;
-        zh-TW) echo "【溫度與熱壓力歷史】" ;;
-        zh-Hans) echo "【温度与热压力历史】" ;;
-        ko-KR) echo "【온도 및 열 이력】" ;;
-        es-ES) echo "【Historial térmico y de temperatura】" ;;
-        de-DE) echo "【Temperatur- & Thermohistorie】" ;;
-        fr-FR) echo "【Historique thermique et de température】" ;;
-        pt-BR) echo "【Histórico térmico e de temperatura】" ;;
-        *)     echo "【Thermal & Temperature History】" ;;
+        ja-JP) echo "温度＆サーマル履歴" ;;
+        zh-TW) echo "溫度與熱壓力歷史" ;;
+        zh-Hans) echo "温度与热压力历史" ;;
+        ko-KR) echo "온도 및 열 이력" ;;
+        es-ES) echo "Historial térmico y de temperatura" ;;
+        de-DE) echo "Temperatur- & Thermohistorie" ;;
+        fr-FR) echo "Historique thermique et de température" ;;
+        pt-BR) echo "Histórico térmico e de temperatura" ;;
+        *)     echo "Thermal & Temperature History" ;;
       esac ;;
     sec_disk)
       case "$SS_LANG" in
-        ja-JP) echo "【ストレージ＆ SSD ライフ】" ;;
-        zh-TW) echo "【儲存空間與 SSD 壽命】" ;;
-        zh-Hans) echo "【存储空间与 SSD 寿命】" ;;
-        ko-KR) echo "【저장 공간 및 SSD 수명】" ;;
-        es-ES) echo "【Almacenamiento y vida útil del SSD】" ;;
-        de-DE) echo "【Speicher & SSD-Lebensdauer】" ;;
-        fr-FR) echo "【Stockage et durée de vie du SSD】" ;;
-        pt-BR) echo "【Armazenamento e vida útil do SSD】" ;;
-        *)     echo "【Storage & SSD Lifespan】" ;;
+        ja-JP) echo "ストレージ＆ SSD ライフ" ;;
+        zh-TW) echo "儲存空間與 SSD 壽命" ;;
+        zh-Hans) echo "存储空间与 SSD 寿命" ;;
+        ko-KR) echo "저장 공간 및 SSD 수명" ;;
+        es-ES) echo "Almacenamiento y vida útil del SSD" ;;
+        de-DE) echo "Speicher & SSD-Lebensdauer" ;;
+        fr-FR) echo "Stockage et durée de vie du SSD" ;;
+        pt-BR) echo "Armazenamento e vida útil do SSD" ;;
+        *)     echo "Storage & SSD Lifespan" ;;
       esac ;;
     verdict_title)
       case "$SS_LANG" in
-        ja-JP) echo "【診断結果（Verdict）】" ;;
-        zh-TW) echo "【裁決報告（Verdict）】" ;;
-        zh-Hans) echo "【裁决报告（Verdict）】" ;;
-        ko-KR) echo "【진단 보고서 (Verdict)】" ;;
-        es-ES) echo "【Veredicto del diagnóstico】" ;;
-        de-DE) echo "【Diagnose-Urteil】" ;;
-        fr-FR) echo "【Verdict du diagnostic】" ;;
-        pt-BR) echo "【Veredito do diagnóstico】" ;;
-        *)     echo "【Audit Verdict】" ;;
+        ja-JP) echo "診断結果（Verdict）" ;;
+        zh-TW) echo "裁決報告（Verdict）" ;;
+        zh-Hans) echo "裁决报告（Verdict）" ;;
+        ko-KR) echo "진단 보고서 (Verdict)" ;;
+        es-ES) echo "Veredicto del diagnóstico" ;;
+        de-DE) echo "Diagnose-Urteil" ;;
+        fr-FR) echo "Verdict du diagnostic" ;;
+        pt-BR) echo "Veredito do diagnóstico" ;;
+        *)     echo "Audit Verdict" ;;
       esac ;;
     label_swap)
       case "$SS_LANG" in
