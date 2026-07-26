@@ -502,10 +502,10 @@ build_verdict_line_memory() {
 
   if [ "$swap_mb" -lt "$pass_threshold" ]; then
     case "$SS_LANG" in
-      zh-TW|zh-Hans) echo "  • $(t tag_pass) $(t name_memory)：實體記憶體充裕（已用 ${swap_fmt}）。" ;;
-      ja-JP) echo "  • $(t tag_pass) $(t name_memory)：物理メモリは十分です（使用済み ${swap_fmt}）。" ;;
-      ko-KR) echo "  • $(t tag_pass) $(t name_memory)：물리적 메모리 여유 있음（사용됨 ${swap_fmt}）。" ;;
-      *) echo "  • $(t tag_pass) $(t name_memory): Physical memory is ample (${swap_fmt} used)." ;;
+      zh-TW|zh-Hans) echo "  • $(t tag_pass) $(t name_memory)：充裕（Swap ${swap_fmt}）。" ;;
+      ja-JP) echo "  • $(t tag_pass) $(t name_memory)：十分（Swap ${swap_fmt}）。" ;;
+      ko-KR) echo "  • $(t tag_pass) $(t name_memory)：여유 있음（Swap ${swap_fmt}）。" ;;
+      *) echo "  • $(t tag_pass) $(t name_memory): Ample (Swap ${swap_fmt})." ;;
     esac
   elif [ "$swap_mb" -lt 3000 ]; then
     case "$SS_LANG" in
