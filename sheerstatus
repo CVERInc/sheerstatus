@@ -43,15 +43,15 @@ t() {
   case "$1" in
     banner_title)
       case "$SS_LANG" in
-        ja-JP) echo "sheerstatus v${VERSION} — ハードウェア＆買替診断" ;;
-        zh-TW) echo "sheerstatus v${VERSION} —— 硬體健康與換機診斷" ;;
-        zh-Hans) echo "sheerstatus v${VERSION} —— 硬件健康与换机诊断" ;;
-        ko-KR) echo "sheerstatus v${VERSION} — 하드웨어 및 교체 진단" ;;
-        es-ES) echo "sheerstatus v${VERSION} — Auditoría de hardware y actualización" ;;
-        de-DE) echo "sheerstatus v${VERSION} — Hardware- & Aufrüstungsdiagnose" ;;
-        fr-FR) echo "sheerstatus v${VERSION} — Diagnostic matériel et de mise à niveau" ;;
-        pt-BR) echo "sheerstatus v${VERSION} — Auditoria de hardware e substituição" ;;
-        *)     echo "sheerstatus v${VERSION} — Hardware & Pre-Upgrade Auditor" ;;
+        ja-JP) echo "sheerstatus ハードウェア健康診断" ;;
+        zh-TW) echo "sheerstatus 硬體健康診斷" ;;
+        zh-Hans) echo "sheerstatus 硬件健康诊断" ;;
+        ko-KR) echo "sheerstatus 하드웨어 건강 진단" ;;
+        es-ES) echo "sheerstatus Auditoría de salud del hardware" ;;
+        de-DE) echo "sheerstatus Hardware-Gesundheitsdiagnose" ;;
+        fr-FR) echo "sheerstatus Diagnostic de santé du matériel" ;;
+        pt-BR) echo "sheerstatus Auditoria de saúde do hardware" ;;
+        *)     echo "sheerstatus Hardware Health Audit" ;;
       esac ;;
     sec_header)
       case "$SS_LANG" in
