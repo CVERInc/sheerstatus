@@ -1,0 +1,226 @@
+#!/usr/bin/env bash
+# sheerstatus — the Mac hardware & pre-upgrade auditor you can read.
+# Open source · zero daemons · hard-data verdict · single-file Bash.
+# https://oss.cver.net/sheerstatus  ·  MIT © CVER Inc.
+#
+# Usage:
+#   sheerstatus              # Print hardware health & pre-upgrade audit verdict
+#   sheerstatus --json       # Output JSON for automation
+#   sheerstatus --version    # Print version
+#   sheerstatus --help       # Print help
+#
+set -u
+
+VERSION="0.1.0"
+
+# ============================================================================
+# i18n — en-US · ja-JP · zh-TW · zh-Hans.
+# Auto-detected; override with SHEERSTATUS_LANG.
+# ============================================================================
+ss_resolve_lang() {
+  local l="${SHEERSTATUS_LANG:-${LANG:-}}"
+  [ -z "$l" ] && l="$(defaults read -g AppleLocale 2>/dev/null || true)"
+  case "$l" in
+    ja*|*ja_JP*|*ja-JP*)                        echo "ja-JP" ;;
+    *zh*Hant*|*zh_TW*|*zh-TW*|*zh_HK*|*zh-HK*)  echo "zh-TW" ;;
+    zh*|*zh_CN*|*zh-CN*|*zh_SG*|*zh*Hans*)      echo "zh-Hans" ;;
+    *)                                          echo "en-US" ;;
+  esac
+}
+SS_LANG="$(ss_resolve_lang)"
+
+t() {
+  # shellcheck disable=SC1111  # fullwidth “” below are deliberate CJK typography
+  case "$1" in
+    banner_title)
+      case "$SS_LANG" in
+        ja-JP) echo "🖥️  sheerstatus v${VERSION} — Mac ハードウェア＆買替診断" ;;
+        zh-TW) echo "🖥️  sheerstatus v${VERSION} —— Mac 硬體健康與換機診斷" ;;
+        zh-Hans) echo "🖥️  sheerstatus v${VERSION} —— Mac 硬件健康与换机诊断" ;;
+        *)     echo "🖥️  sheerstatus v${VERSION} — Mac Hardware & Pre-Upgrade Auditor" ;;
+      esac ;;
+    sec_memory)
+      case "$SS_LANG" in
+        ja-JP) echo "【メモリ＆ Swap 現況】" ;;
+        zh-TW) echo "【記憶體與 Swap 現況】" ;;
+        zh-Hans) echo "【内存与 Swap 现况】" ;;
+        *)     echo "【Memory & Swap Pressure】" ;;
+      esac ;;
+    sec_thermal)
+      case "$SS_LANG" in
+        ja-JP) echo "【温度＆サーマル履歴】" ;;
+        zh-TW) echo "【溫度與熱壓力歷史】" ;;
+        zh-Hans) echo "【温度与热压力历史】" ;;
+        *)     echo "【Thermal & Temperature History】" ;;
+      esac ;;
+    sec_disk)
+      case "$SS_LANG" in
+        ja-JP) echo "【ストレージ＆ SSD ライフ】" ;;
+        zh-TW) echo "【儲存空間與 SSD 壽命】" ;;
+        zh-Hans) echo "【存储空间与 SSD 寿命】" ;;
+        *)     echo "【Storage & SSD Lifespan】" ;;
+      esac ;;
+    verdict_title)
+      case "$SS_LANG" in
+        ja-JP) echo "【診断結果（Verdict）】" ;;
+        zh-TW) echo "【裁決報告（Verdict）】" ;;
+        zh-Hans) echo "【裁决报告（Verdict）】" ;;
+        *)     echo "【Audit Verdict】" ;;
+      esac ;;
+    verdict_healthy)
+      case "$SS_LANG" in
+        zh-TW) echo "🟢 系統非常健康。記憶體與儲存空間極為充裕，目前無任何升級需求。" ;;
+        ja-JP) echo "🟢 システムは非常に健康です。メモリとストレージは十分であり、買い替えの必要はありません。" ;;
+        zh-Hans) echo "🟢 系统非常健康。内存与存储空间极其充裕，目前无任何升级需求。" ;;
+        *)     echo "🟢 System is extremely healthy. Ample memory and storage available. No upgrade needed." ;;
+      esac ;;
+    verdict_warning)
+      case "$SS_LANG" in
+        zh-TW) echo "🟡 記憶體壓力或 Swap 開始吃緊。若工作時常態感覺微延遲，建議未來選購時升級記憶體（建議 24GB+）。" ;;
+        ja-JP) echo "🟡 メモリまたは Swap が混雑しています。日常の動作で遅延を感じる場合は、次回購入時にメモリ増設（24GB以上）を推奨します。" ;;
+        zh-Hans) echo "🟡 内存压力或 Swap 开始吃紧。若工作时常态感觉微延迟，建议未来选购时升级内存（建议 24GB+）。" ;;
+        *)     echo "🟡 Memory or Swap is getting tight. Consider opting for higher RAM (24GB+) on your next machine if lag persists." ;;
+      esac ;;
+    verdict_critical)
+      case "$SS_LANG" in
+        zh-TW) echo "🔴 記憶體或儲存空間嚴重赤字！系統正面臨高強度 Swap 換頁與磁碟擠壓，建議規劃更換更高規格之 Mac。" ;;
+        ja-JP) echo "🔴 メモリまたはストレージが深刻な不足状態です。高スペックな Mac への買い替えを推奨します。" ;;
+        zh-Hans) echo "🔴 内存或存储空间严重赤字！系统正面临高强度 Swap 换页与磁盘挤压，建议规划更换更高规格之 Mac。" ;;
+        *)     echo "🔴 Heavy memory or storage deficit! Severe swap or disk pressure detected. Upgrading to a higher-spec Mac is recommended." ;;
+      esac ;;
+  esac
+}
+
+# --- Gather Metrics ---
+
+get_swap() {
+  sysctl -n vm.swapusage 2>/dev/null || echo "N/A"
+}
+
+get_temp_live() {
+  local raw
+  raw="$(ioreg -rn AppleSmartBattery 2>/dev/null | grep -o '"Temperature"=[0-9]*' | cut -d= -f2 || true)"
+  if [ -n "$raw" ]; then
+    awk "BEGIN {printf \"%.1f\", $raw/100}"
+  else
+    echo "N/A"
+  fi
+}
+
+get_temp_max() {
+  local raw
+  raw="$(ioreg -rn AppleSmartBattery 2>/dev/null | grep -o '"MaximumTemperature"=[0-9]*' | cut -d= -f2 || true)"
+  if [ -n "$raw" ]; then
+    echo "$raw"
+  else
+    echo "N/A"
+  fi
+}
+
+get_temp_avg() {
+  local raw
+  raw="$(ioreg -rn AppleSmartBattery 2>/dev/null | grep -o '"AverageTemperature"=[0-9]*' | cut -d= -f2 || true)"
+  if [ -n "$raw" ]; then
+    awk "BEGIN {printf \"%.1f\", $raw/10}"
+  else
+    echo "N/A"
+  fi
+}
+
+get_disk_free() {
+  df -h /System/Volumes/Data 2>/dev/null | awk 'NR==2 {print $4 " (可用 " $5 " 已用)"}'
+}
+
+get_swap_used_mb() {
+  sysctl -n vm.swapusage 2>/dev/null | awk '{for(i=1;i<=NF;i++) if($i=="used") print $(i+2)}' | tr -d 'M' | cut -d. -f1
+}
+
+# --- Run Audit Output ---
+
+run_audit() {
+  local swap_info temp_live temp_max temp_avg disk_info swap_used_mb
+  swap_info="$(get_swap)"
+  temp_live="$(get_temp_live)"
+  temp_max="$(get_temp_max)"
+  temp_avg="$(get_temp_avg)"
+  disk_info="$(get_disk_free)"
+  swap_used_mb="$(get_swap_used_mb)"
+  [ -z "$swap_used_mb" ] && swap_used_mb=0
+
+  echo "============================================================"
+  t banner_title
+  echo "============================================================"
+  echo ""
+  t sec_memory
+  echo "  • Swap 狀態       : ${swap_info}"
+  
+  local compressed_pages comp_gb
+  compressed_pages="$(vm_stat 2>/dev/null | awk '/Pages stored in compressor/ {print $5}' | tr -d '.' || echo 0)"
+  if [ "$compressed_pages" -gt 0 ]; then
+    comp_gb="$(awk "BEGIN {printf \"%.1f\", $compressed_pages * 16384 / 1073741824}")"
+    echo "  • 記憶體壓縮量   : ~${comp_gb} GB"
+  fi
+  echo ""
+
+  t sec_thermal
+  echo "  • 當前機身/電池溫 : ${temp_live} °C"
+  echo "  • 歷史全期平均溫 : ${temp_avg} °C"
+  echo "  • 歷史極限最高溫 : ${temp_max} °C"
+  echo ""
+
+  t sec_disk
+  echo "  • Data 磁碟剩餘  : ${disk_info}"
+  echo ""
+
+  echo "------------------------------------------------------------"
+  t verdict_title
+  if [ "$swap_used_mb" -lt 500 ]; then
+    t verdict_healthy
+  elif [ "$swap_used_mb" -lt 3000 ]; then
+    t verdict_warning
+  else
+    t verdict_critical
+  fi
+  echo "============================================================"
+}
+
+run_json() {
+  local temp_live temp_max temp_avg swap_used_mb
+  temp_live="$(get_temp_live)"
+  temp_max="$(get_temp_max)"
+  temp_avg="$(get_temp_avg)"
+  swap_used_mb="$(get_swap_used_mb)"
+  [ -z "$swap_used_mb" ] && swap_used_mb=0
+
+  cat <<EOF
+{
+  "version": "${VERSION}",
+  "swap_used_mb": ${swap_used_mb},
+  "temp_live_c": "${temp_live}",
+  "temp_avg_c": "${temp_avg}",
+  "temp_max_c": "${temp_max}"
+}
+EOF
+}
+
+# CLI Router
+case "${1:-}" in
+  --json)
+    run_json
+    ;;
+  --version|-v)
+    echo "sheerstatus v${VERSION}"
+    ;;
+  --help|-h)
+    echo "sheerstatus — the Mac hardware & pre-upgrade auditor you can read."
+    echo ""
+    echo "Usage:"
+    echo "  sheerstatus              Print hardware health & audit verdict"
+    echo "  sheerstatus --json       Output JSON for automation"
+    echo "  sheerstatus --version    Print version"
+    echo "  sheerstatus --help       Print help"
+    ;;
+  *)
+    run_audit
+    ;;
+esac
