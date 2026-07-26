@@ -258,7 +258,7 @@ get_chip_name() {
     sysctl -n machdep.cpu.brand_string 2>/dev/null || sysctl -n hw.model 2>/dev/null || echo "Apple Silicon"
   else
     local cpu_name
-    cpu_name="$(grep -m1 "model name" /proc/cpuinfo 2>/dev/null | cut -d: -f2 | sed 's/^\s*//' || true)"
+    cpu_name="$(grep -m1 "model name" /proc/cpuinfo 2>/dev/null | cut -d: -f2 | awk '{$1=$1};1' || true)"
     if [ -z "$cpu_name" ] && [ -f /sys/firmware/devicetree/base/model ]; then
       cpu_name="$(tr -d '\0' < /sys/firmware/devicetree/base/model 2>/dev/null || true)"
     fi
@@ -502,10 +502,10 @@ build_verdict_line_memory() {
 
   if [ "$swap_mb" -lt "$pass_threshold" ]; then
     case "$SS_LANG" in
-      zh-TW|zh-Hans) echo "  • $(t tag_pass) $(t name_memory)：未啟用虛擬記憶體（${swap_fmt}）。" ;;
-      ja-JP) echo "  • $(t tag_pass) $(t name_memory)：仮想メモリは未使用です（${swap_fmt}）。" ;;
-      ko-KR) echo "  • $(t tag_pass) $(t name_memory)：가상 메모리를 사용하지 않음（${swap_fmt}）。" ;;
-      *) echo "  • $(t tag_pass) $(t name_memory): Virtual memory inactive (${swap_fmt})." ;;
+      zh-TW|zh-Hans) echo "  • $(t tag_pass) $(t name_memory)：實體記憶體充裕（已用 ${swap_fmt}）。" ;;
+      ja-JP) echo "  • $(t tag_pass) $(t name_memory)：物理メモリは十分です（使用済み ${swap_fmt}）。" ;;
+      ko-KR) echo "  • $(t tag_pass) $(t name_memory)：물리적 메모리 여유 있음（사용됨 ${swap_fmt}）。" ;;
+      *) echo "  • $(t tag_pass) $(t name_memory): Physical memory is ample (${swap_fmt} used)." ;;
     esac
   elif [ "$swap_mb" -lt 3000 ]; then
     case "$SS_LANG" in
@@ -766,9 +766,12 @@ run_json() {
   [ -z "$swap_used_mb" ] && swap_used_mb=0
 
   # Strict JSON escaping for potentially untrusted hardware string outputs
-  local json_chip="${chip//\"/\\\"}"
-  local json_ram="${ram//\"/\\\"}"
-  local json_ssd="${ssd//\"/\\\"}"
+  local json_chip="${chip//\\/\\\\}"
+  json_chip="${json_chip//\"/\\\"}"
+  local json_ram="${ram//\\/\\\\}"
+  json_ram="${json_ram//\"/\\\"}"
+  local json_ssd="${ssd//\\/\\\\}"
+  json_ssd="${json_ssd//\"/\\\"}"
 
   cat <<EOF
 {
