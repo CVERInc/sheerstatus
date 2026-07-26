@@ -11,7 +11,7 @@
 #
 set -u
 
-VERSION="0.6.0"
+VERSION="0.6.1"
 
 # ============================================================================
 # i18n — en-US · ja-JP · zh-TW · zh-Hans · ko-KR · es-ES · de-DE · fr-FR · pt-BR.
@@ -264,6 +264,32 @@ pad_row() {
   esac
 }
 
+# --- Target Storage Mount Resolver (Prevents network hang & targets max user partition) ---
+
+get_target_mount() {
+  if [ "$(uname)" = "Darwin" ]; then
+    if [ -d "/System/Volumes/Data" ]; then
+      echo "/System/Volumes/Data"
+    else
+      echo "/"
+    fi
+  else
+    # Linux: Check both / and $HOME partition using local-only df (-hl), pick highest usage %
+    local home_dir="${HOME:-/}"
+    local root_pct home_pct
+    root_pct="$(df -hl / 2>/dev/null | awk 'NR==2 {print $5}' | tr -d '%' || echo 0)"
+    home_pct="$(df -hl "$home_dir" 2>/dev/null | awk 'NR==2 {print $5}' | tr -d '%' || echo 0)"
+    [ -z "$root_pct" ] && root_pct=0
+    [ -z "$home_pct" ] && home_pct=0
+
+    if [ "$home_pct" -gt "$root_pct" ]; then
+      echo "$home_dir"
+    else
+      echo "/"
+    fi
+  fi
+}
+
 # --- Cross-Platform Metrics (macOS + Linux) ---
 
 get_chip_name() {
@@ -295,11 +321,12 @@ get_ram_gb() {
 }
 
 get_ssd_size() {
-  local mount_path="/"
-  [ "$(uname)" = "Darwin" ] && mount_path="/System/Volumes/Data"
+  local mount_path
+  mount_path="$(get_target_mount)"
 
   local raw_df
-  raw_df="$(df -h "$mount_path" 2>/dev/null | awk 'NR==2 {print $2}')"
+  # Force local-only df (-hl) to prevent NFS network mount hangs
+  raw_df="$(df -hl "$mount_path" 2>/dev/null | awk 'NR==2 {print $2}')"
   raw_df="${raw_df%Gi}"
   raw_df="${raw_df%G}"
   raw_df="${raw_df%Ti}"
@@ -347,13 +374,14 @@ get_swap_formatted() {
 }
 
 get_disk_formatted() {
-  local mount_path="/"
-  [ "$(uname)" = "Darwin" ] && mount_path="/System/Volumes/Data"
+  local mount_path
+  mount_path="$(get_target_mount)"
 
   local used_df total_df pct
-  used_df="$(df -h "$mount_path" 2>/dev/null | awk 'NR==2 {print $3}')"
-  total_df="$(df -h "$mount_path" 2>/dev/null | awk 'NR==2 {print $2}')"
-  pct="$(df -h "$mount_path" 2>/dev/null | awk 'NR==2 {print $5}')"
+  # Force local-only df (-hl) to prevent NFS network mount hangs
+  used_df="$(df -hl "$mount_path" 2>/dev/null | awk 'NR==2 {print $3}')"
+  total_df="$(df -hl "$mount_path" 2>/dev/null | awk 'NR==2 {print $2}')"
+  pct="$(df -hl "$mount_path" 2>/dev/null | awk 'NR==2 {print $5}')"
 
   used_df="${used_df%Gi}"
   used_df="${used_df%G}"
@@ -364,9 +392,10 @@ get_disk_formatted() {
 }
 
 get_disk_pct_num() {
-  local mount_path="/"
-  [ "$(uname)" = "Darwin" ] && mount_path="/System/Volumes/Data"
-  df -h "$mount_path" 2>/dev/null | awk 'NR==2 {print $5}' | tr -d '%' | cut -d. -f1
+  local mount_path
+  mount_path="$(get_target_mount)"
+  # Force local-only df (-hl)
+  df -hl "$mount_path" 2>/dev/null | awk 'NR==2 {print $5}' | tr -d '%' | cut -d. -f1
 }
 
 get_temp_live() {
@@ -438,10 +467,18 @@ get_battery_pct() {
       fi
     fi
   else
-    local cap_path
-    cap_path="$(ls /sys/class/power_supply/*/capacity 2>/dev/null | head -n1 || true)"
-    if [ -n "$cap_path" ] && [ -f "$cap_path" ]; then
-      cat "$cap_path" 2>/dev/null | awk '{print $1"%"}'
+    # Linux multi-battery support (average capacity across all BAT nodes)
+    local caps=0 count=0 cap
+    for cap_path in /sys/class/power_supply/*/capacity; do
+      if [ -f "$cap_path" ]; then
+        cap="$(cat "$cap_path" 2>/dev/null || echo 0)"
+        caps=$(( caps + cap ))
+        count=$(( count + 1 ))
+      fi
+    done
+    if [ "$count" -gt 0 ]; then
+      local avg_cap=$(( caps / count ))
+      echo "${avg_cap}%"
     else
       echo "N/A"
     fi
@@ -466,20 +503,23 @@ get_battery_cycles() {
       echo "N/A"
     fi
   else
-    local cyc_path
-    cyc_path="$(ls /sys/class/power_supply/*/cycle_count 2>/dev/null | head -n1 || true)"
-    if [ -n "$cyc_path" ] && [ -f "$cyc_path" ]; then
-      local cycle_cnt
-      cycle_cnt="$(cat "$cyc_path" 2>/dev/null || echo "")"
-      if [ -n "$cycle_cnt" ]; then
-        case "$SS_LANG" in
-          zh-TW|zh-Hans) echo "${cycle_cnt} 次" ;;
-          ja-JP) echo "${cycle_cnt} 回" ;;
-          *) echo "${cycle_cnt}" ;;
-        esac
-      else
-        echo "N/A"
+    # Linux multi-battery support (sum cycles across all BAT nodes)
+    local total_cycles=0 count=0 cyc
+    for cyc_path in /sys/class/power_supply/*/cycle_count; do
+      if [ -f "$cyc_path" ]; then
+        cyc="$(cat "$cyc_path" 2>/dev/null || echo 0)"
+        if [ "$cyc" -gt 0 ]; then
+          total_cycles=$(( total_cycles + cyc ))
+          count=$(( count + 1 ))
+        fi
       fi
+    done
+    if [ "$count" -gt 0 ]; then
+      case "$SS_LANG" in
+        zh-TW|zh-Hans) echo "${total_cycles} 次" ;;
+        ja-JP) echo "${total_cycles} 回" ;;
+        *) echo "${total_cycles}" ;;
+      esac
     else
       echo "N/A"
     fi
