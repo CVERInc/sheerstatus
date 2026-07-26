@@ -238,8 +238,8 @@ get_target_mount() {
     # Linux: Check both / and $HOME partition using local-only df (-hl), pick highest usage %
     local home_dir="${HOME:-/}"
     local root_pct home_pct
-    root_pct="$(df -hl / 2>/dev/null | awk 'NR==2 {print $5}' | tr -d '%' || echo 0)"
-    home_pct="$(df -hl "$home_dir" 2>/dev/null | awk 'NR==2 {print $5}' | tr -d '%' || echo 0)"
+    root_pct="$(df -P -k / 2>/dev/null | awk 'NR==2 {print $5}' | tr -d '%' || echo 0)"
+    home_pct="$(df -P -k "$home_dir" 2>/dev/null | awk 'NR==2 {print $5}' | tr -d '%' || echo 0)"
     [ -z "$root_pct" ] && root_pct=0
     [ -z "$home_pct" ] && home_pct=0
 
@@ -338,7 +338,7 @@ get_disk_formatted() {
 
 get_disk_pct_num() {
   local mount_path="${1:-$(get_target_mount)}"
-  df -hl "$mount_path" 2>/dev/null | awk 'NR==2 {print $5}' | tr -d '%' | cut -d. -f1
+  df -P -k "$mount_path" 2>/dev/null | awk 'NR==2 {print $5}' | tr -d '%' | cut -d. -f1
 }
 
 get_temp_live() {
