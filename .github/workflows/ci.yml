@@ -1,0 +1,51 @@
+# CVER OSS delivery baseline — shell CI.
+# Static checks plus the local suite, on BOTH platforms the README promises.
+#
+# The tool claims "macOS & Linux natively out-of-the-box" and has real /proc and
+# /sys paths to back it up, so the Linux job runs the same suite rather than a
+# reduced one. A cross-platform claim that only ever runs on one platform is the
+# same kind of unbacked promise as a 9-locale claim with four locales in it.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  static:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: ShellCheck
+        run: shellcheck sheerstatus test.sh
+
+      - name: Syntax check
+        run: bash -n sheerstatus && bash -n test.sh
+
+      - name: Signet (CLI) — one language across the family
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/CVERInc/signet/main/packages/cli/lint.sh -o /tmp/signet-cli-lint
+          bash /tmp/signet-cli-lint sheerstatus test.sh
+
+      - name: CHANGELOG has an entry for the script version
+        run: |
+          v="$(grep -E '^VERSION=' sheerstatus | head -1 | sed -E 's/.*"([0-9.]+)".*/\1/')"
+          echo "script version: $v"
+          grep -q "\[$v\]" CHANGELOG.md || { echo "CHANGELOG.md missing a section for $v"; exit 1; }
+
+  suite:
+    strategy:
+      fail-fast: false      # a platform-specific break should be visible as one
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Local suite (routing · 9 locales · JSON · i18n completeness)
+        run: |
+          chmod +x sheerstatus
+          bash test.sh
