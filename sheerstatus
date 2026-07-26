@@ -299,7 +299,12 @@ get_ssd_size() {
   
   kb="$(df -P -k "$mount_path" 2>/dev/null | awk 'NR==2 {print $2}')"
   [ -z "$kb" ] && kb=0
-  gb=$(( kb / 1048576 ))
+  # Storage is DECIMAL — diskutil, Finder and System Settings all say 245.1 GB
+  # for the volume `df -h` calls 228Gi, and those are the numbers the owner can
+  # check us against. (Memory is the other way: hw.memsize / 1024³ is the 16 GB
+  # that About This Mac shows, and vm.swapusage reports binary M too. The base
+  # follows the DOMAIN, not the tool.) df gives 1024-byte blocks, so ×1024 ÷1000³.
+  gb="$(awk -v k="$kb" 'BEGIN{printf "%.0f", k * 1024 / 1000000000}')"
 
   echo "${gb} GB"
 }
@@ -343,7 +348,7 @@ get_disk_formatted() {
   
   kb="$(df -P -k "$mount_path" 2>/dev/null | awk 'NR==2 {print $3}')"
   [ -z "$kb" ] && kb=0
-  gb=$(( kb / 1048576 ))
+  gb="$(awk -v k="$kb" 'BEGIN{printf "%.0f", k * 1024 / 1000000000}')"   # decimal — see get_disk_total
 
   echo "${gb} GB"
 }
