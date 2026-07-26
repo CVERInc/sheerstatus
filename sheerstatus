@@ -11,7 +11,7 @@
 #
 set -u
 
-VERSION="0.5.2"
+VERSION="0.6.0"
 
 # ============================================================================
 # i18n — en-US · ja-JP · zh-TW · zh-Hans · ko-KR · es-ES · de-DE · fr-FR · pt-BR.
@@ -568,7 +568,9 @@ build_verdict_line_battery() {
   bat_pct="$1"
   bat_cycles="$(get_battery_cycles)"
 
-  [ -z "$bat_pct" ] || [ "$bat_pct" = "N/A" ] && bat_pct=100
+  if [ -z "$bat_pct" ] || [ "$bat_pct" = "N/A" ]; then
+    return
+  fi
 
   if [ "$bat_pct" -ge 80 ]; then
     case "$SS_LANG" in
@@ -689,17 +691,19 @@ run_audit() {
     echo ""
     t sec_storage
     pad_row "$(t label_storage_usage)" "${disk_fmt}"
-    echo ""
-    t sec_battery
-    pad_row "$(t label_temp_live)" "${temp_live} °C"
-    if [ "$temp_avg" != "N/A" ]; then
-      pad_row "$(t label_temp_avg)" "${temp_avg} °C"
-    else
-      pad_row "$(t label_temp_avg)" "N/A"
+    if [ "$bat_pct" != "N/A" ] && [ -n "$bat_pct" ]; then
+      echo ""
+      t sec_battery
+      pad_row "$(t label_temp_live)" "${temp_live} °C"
+      if [ "$temp_avg" != "N/A" ]; then
+        pad_row "$(t label_temp_avg)" "${temp_avg} °C"
+      else
+        pad_row "$(t label_temp_avg)" "N/A"
+      fi
+      pad_row "$(t label_temp_max)" "${temp_max}"
+      pad_row "$(t label_battery_health)" "${bat_pct}"
+      pad_row "$(t label_cycles)" "${bat_cycles}"
     fi
-    pad_row "$(t label_temp_max)" "${temp_max}"
-    pad_row "$(t label_battery_health)" "${bat_pct}"
-    pad_row "$(t label_cycles)" "${bat_cycles}"
     echo ""
     echo "------------------------------------------------------------"
     t verdict_title

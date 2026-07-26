@@ -1,17 +1,47 @@
 # sheerstatus
 
-**The Mac hardware & pre-upgrade auditor you can read.**  
-Open source · zero daemons · hard-data verdict · single-file Bash.
+**the zero-daemon hardware & pre-upgrade auditor you can read.**
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+`sheerstatus` is a single-file POSIX Bash executable that audits your Mac or Linux system metrics (RAM, Swap, Storage capacity, Battery health, BMS thermals) and outputs a zero-fluff, hard-data pre-upgrade verdict.
+
+- **Zero Daemons**: No background services running 24/7. Run it on-demand when contemplating a hardware upgrade or debugging lag.
+- **Zero Dependencies**: Pure POSIX Bash using native `sysctl`, `df`, `ioreg` (macOS), and `/proc`, `/sys` (Linux).
+- **Cross-Platform**: Supports macOS & Linux natively out-of-the-box.
+- **9 Locales Supported**: `en-US`, `ja-JP`, `zh-TW`, `zh-Hans`, `ko-KR`, `es-ES`, `de-DE`, `fr-FR`, `pt-BR`.
+- **Zero Decorative Emojis**: Clean, professional ASCII status indicators (`[PASS]`, `[WARN]`, `[CRIT]`).
 
 ---
 
-## What is sheerstatus?
+## Output Demo
 
-`sheerstatus` is a single-file, zero-dependency CLI auditor for macOS that answers one core question: **"Does my Mac actually need an upgrade right now?"**
 
-Unlike heavy menu bar utilities that run 24/7 background daemons (wasting RAM just to tell you your RAM is full), `sheerstatus` runs **on-demand**. Run it once before Apple sales / BTS season or whenever you're tempted to buy a new Mac. It queries macOS system controllers for lifetime hardware metrics and outputs an objective, hard-data **Verdict**.
+```text
+============================================================
+sheerstatus v0.6.0 — Hardware & Pre-Upgrade Auditor
+  • System Specs: Apple M2 (16 GB · 228 GB Disk)
+
+Memory & Swap
+  • Swap Used: 2.07 / 3.00 GB
+
+Storage
+  • Capacity Usage: 192 / 228 GB (95%)
+
+Battery Status
+  • Live Temp: 30.4 °C
+  • Avg Temp: 24.2 °C
+  • Max Temp: 42 °C
+  • Health: 100%
+  • Cycle Count: 136
+
+------------------------------------------------------------
+Audit Verdict
+  • [WARN] Memory: Swap in use 2.07 / 3.00 GB (current: 16 GB).
+  • [CRIT] Storage: Severe storage deficit (95% used).
+  • [PASS] Battery: Health 100% (136), good condition.
+
+Recommendation: If lag persists, consider opting for a higher RAM tier and larger storage on your next machine.
+============================================================
+```
 
 ---
 
@@ -19,37 +49,35 @@ Unlike heavy menu bar utilities that run 24/7 background daemons (wasting RAM ju
 
 ```bash
 # Clone the repository
-git clone https://github.com/cver-inc/sheerstatus.git
+git clone https://github.com/CVERInc/sheerstatus.git
 cd sheerstatus
 
-# Make executable and run
-chmod +x sheerstatus
+# Run on-demand audit
 ./sheerstatus
+
+# Run for automation (JSON output)
+./sheerstatus --json
 ```
-
----
-
-## Features
-
-- ⚡ **Zero Background Daemons**: Runs only when you invoke it. Uses 0 MB of RAM while idle.
-- 🔒 **Zero Dependencies**: Pure POSIX/Bash script. Uses native macOS utilities (`sysctl`, `ioreg`, `vm_stat`, `df`).
-- 🌐 **Multi-Language (i18n)**: Auto-detects system locale (`en-US`, `ja-JP`, `zh-TW`, `zh-Hans`, `ko-KR`, `es-ES`, `de-DE`, `fr-FR`, `pt-BR`). Override anytime with `SHEERSTATUS_LANG`.
-- 📊 **Lifetime Hardware History**: Extracts lifetime battery/chassis average & maximum temperatures recorded by Apple's BMS IC.
-- ⚖️ **Objective Verdict**: Neutral, hard-data classifier (`🟢 Healthy`, `🟡 Warning`, `🔴 Critical`) that never assumes purchase channels or promotion eligibility.
 
 ---
 
 ## Command Options
 
-```bash
-sheerstatus              # Run interactive hardware health audit
-sheerstatus --json       # Output machine-readable JSON for automation
-sheerstatus --version    # Print version
-sheerstatus --help       # Print help
-```
+| Option | Description |
+| :--- | :--- |
+| `sheerstatus` | Print human-readable 3-pillar hardware health & audit verdict |
+| `sheerstatus --json` | Output machine-readable JSON for monitoring or scripts |
+| `sheerstatus --version` | Output version string |
+| `sheerstatus --help` | Output usage instructions |
+
+---
+
+## Ecosystem
+
+Looking to free up disk space after auditing? Check out [`sheersweep`](https://oss.cver.net/sheersweep), CVER's zero-daemon disk cleaner.
 
 ---
 
 ## License
 
-MIT © [CVER Inc.](https://cver.net)
+MIT © 2026 CVER Inc.
