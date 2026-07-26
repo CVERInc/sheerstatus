@@ -661,8 +661,6 @@ run_audit() {
     if [ "$bat_pct" != "N/A" ] && [ -n "$bat_pct" ]; then
       echo ""
       t sec_battery
-      pad_row "$(t label_cycles)" "${bat_cycles}"
-      
       if [ "$temp_live" != "N/A" ]; then
         pad_row "$(t label_temp_live)" "${temp_live} °C"
       else
@@ -674,6 +672,7 @@ run_audit() {
         pad_row "$(t label_temp_avg)" "N/A"
       fi
       pad_row "$(t label_temp_max)" "${temp_max}"
+      pad_row "$(t label_cycles)" "${bat_cycles}"
     fi
     echo ""
     echo "------------------------------------------------------------"
