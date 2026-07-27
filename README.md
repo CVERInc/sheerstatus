@@ -8,40 +8,38 @@
 - **Zero Dependencies**: Pure POSIX Bash using native `sysctl`, `df`, `ioreg` (macOS), and `/proc`, `/sys` (Linux).
 - **Cross-Platform**: Supports macOS & Linux natively out-of-the-box.
 - **9 Locales Supported**: `en-US`, `ja-JP`, `zh-TW`, `zh-Hans`, `ko-KR`, `es-ES`, `de-DE`, `fr-FR`, `pt-BR`.
-- **Zero Decorative Emojis**: Clean, professional ASCII status indicators (`[PASS]`, `[WARN]`, `[CRIT]`).
+- **Zero Decorative Emojis**: Clean, professional ASCII status indicators (`[ PASS ]`, `[ WARN ]`, `[ CRIT ]`), padded to a fixed width and never translated.
 
 ---
 
 ## Output Demo
 
-
 ```text
-============================================================
-sheerstatus v0.6.0 — Hardware & Pre-Upgrade Auditor
-  • System Specs: Apple M2 (16 GB · 228 GB Disk)
+sheerstatus Hardware Health Audit
+   · System Specs: Apple M2 (RAM 16 GB · Storage 245 GB)
 
-Memory & Swap
-  • Swap Used: 2.07 / 3.00 GB
+▸ Storage
+   · Used: 205 GB
 
-Storage
-  • Capacity Usage: 192 / 228 GB (95%)
+▸ Battery
+   · Capacity: 5107 / 5760 mAh
+   · Live Temp: 30.4 °C
+   · Avg Temp: 24.2 °C
+   · Max Temp: 42 °C
+   · Cycle Count: 136
 
-Battery Status
-  • Live Temp: 30.4 °C
-  • Avg Temp: 24.2 °C
-  • Max Temp: 42 °C
-  • Health: 100%
-  • Cycle Count: 136
+▸ Audit Verdict
+   [ CRIT ] RAM: Heavy virtual memory thrashing will degrade disk lifespan (Swap 3.15 GB).
+   [ CRIT ] Storage: Severe storage deficit (95% used).
+   [ PASS ] Battery: Health good (88%).
 
-------------------------------------------------------------
-Audit Verdict
-  • [WARN] Memory: Swap in use 2.07 / 3.00 GB (current: 16 GB).
-  • [CRIT] Storage: Severe storage deficit (95% used).
-  • [PASS] Battery: Health 100% (136), good condition.
-
-Recommendation: If lag persists, consider opting for a higher RAM tier and larger storage on your next machine.
-============================================================
+▸ Recommendation
+   · If lag persists, consider upgrading RAM and storage on your next machine.
+   · Consider using sheersweep to free up disk space.
 ```
+
+A machine with no battery — a Mac mini, a Linux server — prints no Battery section
+and no battery verdict, rather than a row of `N/A`.
 
 ---
 
@@ -91,7 +89,7 @@ reading verdicts as `"unknown"` rather than being guessed at or omitted.
 
 ## Ecosystem
 
-Looking to free up disk space after auditing? Check out [`sheersweep`](https://oss.cver.net/sheersweep), CVER's zero-daemon disk cleaner.
+Looking to free up disk space after auditing? Check out [`sheersweep`](https://cver.net/oss/sheersweep), CVER's zero-daemon disk cleaner.
 
 ---
 
