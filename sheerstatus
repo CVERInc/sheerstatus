@@ -11,7 +11,7 @@
 #
 set -u
 
-VERSION="0.7.0"
+VERSION="0.8.0"
 
 # ============================================================================
 # i18n — en-US · ja-JP · zh-TW · zh-Hans · ko-KR · es-ES · de-DE · fr-FR · pt-BR.
@@ -615,7 +615,7 @@ get_temp_max() {
     local raw
     raw="$(ioreg -rn AppleSmartBattery 2>/dev/null | tr -d ' ' | grep -o '"MaximumTemperature"=[0-9]*' | cut -d= -f2 | head -n1 || true)"
     if [ -n "$raw" ]; then
-      echo "${raw} °C"
+      echo "${raw}"
     else
       echo "N/A"
     fi
@@ -781,27 +781,52 @@ get_swap_used_mb() {
 
 # --- Audit Verdict Builder ---
 
+# --- Verdict, decided once ---------------------------------------------------
+#
+# WHICH tier this machine is in is one question; how to SAY it is another. They
+# were the same code, so `--json` — the fourth renderer of the same roles — had
+# no way to carry the verdict at all, and shipped without the one thing this
+# tool exists to produce. These three answer the question; the line builders and
+# the JSON both ask them.
+#
+# The words are the family's closed badge set (signet/packages/cli/SPEC.md):
+# pass · warn · crit.
+verdict_memory() {   # $1 = swap MB  $2 = total RAM MB
+  local swap_mb="$1" ram_mb="$2"
+  local pass_threshold=$(( ram_mb * 5 / 100 ))
+  [ "$pass_threshold" -lt 200 ] && pass_threshold=200
+  if   [ "$swap_mb" -lt "$pass_threshold" ]; then echo pass
+  elif [ "$swap_mb" -lt 3000 ];              then echo warn
+  else                                            echo crit
+  fi
+}
+
+verdict_storage() {   # $1 = used %
+  if   [ "$1" -lt 85 ]; then echo pass
+  elif [ "$1" -lt 95 ]; then echo warn
+  else                       echo crit
+  fi
+}
+
+verdict_battery() {   # $1 = health % (or N/A)
+  case "$1" in ''|N/A|*[!0-9]*) echo unknown; return 0 ;; esac
+  if   [ "$1" -ge 80 ]; then echo pass
+  elif [ "$1" -ge 70 ]; then echo warn
+  else                       echo crit
+  fi
+}
+
 build_verdict_line_memory() {
   local swap_mb swap_fmt ram_mb m b
   swap_mb="$1"
   ram_mb="$2"
   swap_fmt="$(get_swap_formatted)"
 
-  # Future-proof ratio thresholds (5% and 20% of total physical RAM)
-  local pass_threshold=$(( ram_mb * 5 / 100 ))
-  local warn_threshold=$(( ram_mb * 20 / 100 ))
-
-  # Base sanity bounds for extreme low-end hardware
-  [ "$pass_threshold" -lt 200 ] && pass_threshold=200
-  [ "$warn_threshold" -lt 500 ] && warn_threshold=500
-
-  if [ "$swap_mb" -lt "$pass_threshold" ]; then
-    m="$(t vd_mem_pass)"; b="$(t tag_pass)"
-  elif [ "$swap_mb" -lt 3000 ]; then
-    m="$(t vd_mem_warn)"; b="$(t tag_warn)"
-  else
-    m="$(t vd_mem_crit)"; b="$(t tag_crit)"
-  fi
+  case "$(verdict_memory "$swap_mb" "$ram_mb")" in
+    pass) m="$(t vd_mem_pass)"; b="$(t tag_pass)" ;;
+    warn) m="$(t vd_mem_warn)"; b="$(t tag_warn)" ;;
+    *)    m="$(t vd_mem_crit)"; b="$(t tag_crit)" ;;
+  esac
   printf '   %s %s%s%s\n' "$b" "$(t name_memory)" "$(t sep_colon)" "${m//\{v\}/$swap_fmt}"
 }
 
@@ -809,13 +834,11 @@ build_verdict_line_storage() {
   local disk_pct m b
   disk_pct="$1"
 
-  if [ "$disk_pct" -lt 85 ]; then
-    m="$(t vd_ssd_pass)"; b="$(t tag_pass)"
-  elif [ "$disk_pct" -lt 95 ]; then
-    m="$(t vd_ssd_warn)"; b="$(t tag_warn)"
-  else
-    m="$(t vd_ssd_crit)"; b="$(t tag_crit)"
-  fi
+  case "$(verdict_storage "$disk_pct")" in
+    pass) m="$(t vd_ssd_pass)"; b="$(t tag_pass)" ;;
+    warn) m="$(t vd_ssd_warn)"; b="$(t tag_warn)" ;;
+    *)    m="$(t vd_ssd_crit)"; b="$(t tag_crit)" ;;
+  esac
   printf '   %s %s%s%s\n' "$b" "$(t name_storage)" "$(t sep_colon)" "${m//\{v\}/$disk_pct}"
 }
 
@@ -823,13 +846,11 @@ build_verdict_line_battery() {
   local bat_pct m b
   bat_pct="$1"
 
-  if [ "$bat_pct" -ge 80 ]; then
-    m="$(t vd_bat_pass)"; b="$(t tag_pass)"
-  elif [ "$bat_pct" -ge 70 ]; then
-    m="$(t vd_bat_warn)"; b="$(t tag_warn)"
-  else
-    m="$(t vd_bat_crit)"; b="$(t tag_crit)"
-  fi
+  case "$(verdict_battery "$bat_pct")" in
+    pass) m="$(t vd_bat_pass)"; b="$(t tag_pass)" ;;
+    warn) m="$(t vd_bat_warn)"; b="$(t tag_warn)" ;;
+    *)    m="$(t vd_bat_crit)"; b="$(t tag_crit)" ;;
+  esac
   printf '   %s %s%s%s\n' "$b" "$(t name_battery)" "$(t sep_colon)" "${m//\{v\}/$bat_pct}"
 }
 
@@ -919,7 +940,7 @@ run_audit() {
         pad_row "$(t label_temp_avg)" "${temp_avg} °C"
       fi
       if [ "$temp_max" != "N/A" ]; then
-        pad_row "$(t label_temp_max)" "${temp_max}"
+        pad_row "$(t label_temp_max)" "${temp_max} °C"
       fi
       if [ "$bat_cycles" != "N/A" ]; then
         pad_row "$(t label_cycles)" "${bat_cycles}"
@@ -957,6 +978,11 @@ run_json() {
   local json_ssd="${ssd//\\/\\\\}"
   json_ssd="${json_ssd//\"/\\\"}"
 
+  # A reading this machine can't take is `null`, not the string "N/A": a consumer
+  # doing arithmetic on "N/A" gets a silent zero, which is the same class of lie
+  # as a size column holding a count.
+  jnum() { case "${1:-}" in ''|N/A|*[!0-9.]*) printf 'null' ;; *) printf '%s' "$1" ;; esac; }
+
   cat <<EOF
 {
   "version": "${VERSION}",
@@ -964,12 +990,17 @@ run_json() {
   "chip": "${json_chip}",
   "ram": "${json_ram}",
   "ssd": "${json_ssd}",
-  "swap_used_mb": ${swap_used_mb},
-  "disk_used_pct": ${disk_pct_num},
-  "battery_health_pct": "${bat_pct_num}",
-  "temp_live_c": "${temp_live}",
-  "temp_avg_c": "${temp_avg}",
-  "temp_max_c": "${temp_max}"
+  "swap_used_mb": $(jnum "$swap_used_mb"),
+  "disk_used_pct": $(jnum "$disk_pct_num"),
+  "battery_health_pct": $(jnum "$bat_pct_num"),
+  "temp_live_c": $(jnum "$temp_live"),
+  "temp_avg_c": $(jnum "$temp_avg"),
+  "temp_max_c": $(jnum "$temp_max"),
+  "verdict": {
+    "memory": "$(verdict_memory "$swap_used_mb" "$(get_ram_mb)")",
+    "storage": "$(verdict_storage "$disk_pct_num")",
+    "battery": "$(verdict_battery "$bat_pct_num")"
+  }
 }
 EOF
 }

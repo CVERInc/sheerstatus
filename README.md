@@ -59,6 +59,23 @@ cd sheerstatus
 ./sheerstatus --json
 ```
 
+The JSON carries the **verdict**, not just the readings — the same three words
+the report prints, so a monitor never has to re-derive the thresholds and drift
+from the tool about the same machine:
+
+```json
+{
+  "swap_used_mb": 2889,
+  "disk_used_pct": 93,
+  "battery_health_pct": 89,
+  "verdict": { "memory": "warn", "storage": "warn", "battery": "pass" }
+}
+```
+
+A reading this machine can't take is `null`, never the string `"N/A"` — a
+consumer doing arithmetic on `"N/A"` gets a silent zero. A battery with no
+reading verdicts as `"unknown"` rather than being guessed at or omitted.
+
 ---
 
 ## Command Options
@@ -66,7 +83,7 @@ cd sheerstatus
 | Option | Description |
 | :--- | :--- |
 | `sheerstatus` | Print human-readable 3-pillar hardware health & audit verdict |
-| `sheerstatus --json` | Output machine-readable JSON for monitoring or scripts |
+| `sheerstatus --json` | The same audit as JSON — readings **and the verdict** |
 | `sheerstatus --version` | Output version string |
 | `sheerstatus --help` | Output usage instructions |
 

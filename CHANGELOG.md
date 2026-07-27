@@ -7,6 +7,49 @@ project adheres to [Semantic Versioning](https://semver.org/).
 Entries for 0.2.0 – 0.6.5 were reconstructed from the commit history on
 2026-07-27; the file had been left at 0.1.0 while the script reached 0.6.5.
 
+## [0.8.0]
+
+### Added — `--json` carries the verdict
+
+The tool exists to produce a verdict. `--json` shipped without one: eleven
+readings and no answer. A consumer had to re-derive the thresholds — and
+whichever way they rounded, the two would eventually disagree about the same
+machine.
+
+```json
+"verdict": { "memory": "warn", "storage": "warn", "battery": "pass" }
+```
+
+The words are the family's closed badge set. The reason it was missing is the
+reason it took a refactor rather than a `printf`: **which tier this machine is
+in** and **how to say it** were the same code, so there was nothing for a second
+renderer to ask. `verdict_memory` / `verdict_storage` / `verdict_battery` answer
+the question now; the report lines and the JSON both ask them, and cannot drift.
+
+A battery the machine can't read returns `unknown` — not a guess, and not a
+missing key.
+
+### Fixed — readings are numbers, or `null`
+
+`"battery_health_pct": "89"` sat beside `"swap_used_mb": 2889`: the same kind of
+fact, two types. And an unavailable reading was the **string** `"N/A"`, which
+any consumer doing arithmetic turns into a silent zero — the same class of lie
+as a size column holding a count.
+
+Numbers are numbers now, and a reading this machine can't take is `null`.
+
+### Fixed — `temp_max_c` was a number wearing a unit
+
+`get_temp_max` returned `42 °C` while its two siblings returned bare numbers, so
+the display special-cased it and `--json` emitted `"42 °C"` under a field named
+`_c`. The getter returns a number; the unit is added where the other two add it.
+
+### Changed — the JSON test asserts the product
+
+It checked that `"version":` appeared, which proved only that the heredoc ran.
+It now asserts the verdict is present and inside the closed set, and that no
+reading is the string `"N/A"` — verified against a deliberately regressed tool.
+
 ## [0.7.0]
 
 ### Fixed — the 9-locale claim was true of the labels and false of the sentences

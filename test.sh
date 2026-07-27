@@ -39,16 +39,29 @@ case "$HELP_OUTPUT" in
   *) fail "--help output invalid" ;;
 esac
 
-# Test 4: JSON output validation
+# Test 4: JSON output
+#
+# Asserting on `"version":` only proved the heredoc ran. What a consumer comes
+# for is the VERDICT — the one thing this tool produces — and `--json` shipped
+# without it until 0.8.0. Assert the product, and assert that readings are JSON
+# numbers rather than the string "N/A" (a consumer doing arithmetic on "N/A"
+# gets a silent zero).
 JSON_OUTPUT="$("$TARGET" --json)"
+for want in '"version":' '"chip":' '"verdict"' '"memory"' '"storage"' '"battery"'; do
+  case "$JSON_OUTPUT" in
+    *"$want"*) : ;;
+    *) fail "--json is missing $want: ${JSON_OUTPUT}" ;;
+  esac
+done
 case "$JSON_OUTPUT" in
-  *'"version":'*) : ;;
-  *) fail "--json output invalid: ${JSON_OUTPUT}" ;;
+  *'"N/A"'*) fail "--json emits the string \"N/A\" where a number or null belongs" ;;
 esac
-case "$JSON_OUTPUT" in
-  *'"chip":'*) pass "--json output structure check" ;;
-  *) fail "--json output invalid: ${JSON_OUTPUT}" ;;
-esac
+# every verdict must be one of the closed set
+if printf '%s' "$JSON_OUTPUT" | tr -d ' \n' | grep -qE '"(memory|storage|battery)":"(pass|warn|crit|unknown)"'; then
+  pass "--json carries the verdict, and readings are numbers or null"
+else
+  fail "--json verdict is not one of pass/warn/crit/unknown: ${JSON_OUTPUT}"
+fi
 
 # Test 5: 9-locale sweep
 LOCALES=("en-US" "ja-JP" "zh-TW" "zh-Hans" "ko-KR" "es-ES" "de-DE" "fr-FR" "pt-BR")
