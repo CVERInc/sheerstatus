@@ -46,16 +46,28 @@ and no battery verdict, rather than a row of `N/A`.
 ## Quick Start
 
 ```bash
-# Clone the repository
-git clone https://github.com/CVERInc/sheerstatus.git
-cd sheerstatus
+# Run it without installing anything
+npx sheerstatus
 
-# Run on-demand audit
-./sheerstatus
-
-# Run for automation (JSON output)
-./sheerstatus --json
+# The same audit as JSON, for automation
+npx sheerstatus --json
 ```
+
+Or take the file itself — no package manager involved, nothing left behind but
+the one script you can read:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/CVERInc/sheerstatus/main/sheerstatus -o sheerstatus
+chmod +x sheerstatus
+./sheerstatus
+```
+
+**npm is a delivery channel here, not a dependency.** What it hands you is the
+same single Bash file — no `node_modules`, no install-time script, nothing that
+runs until you run it. You can read the exact published bytes in a browser at
+[unpkg.com/sheerstatus/sheerstatus](https://unpkg.com/sheerstatus/sheerstatus)
+before you ever execute them. `npx` itself needs Node; the script does not, so on
+a Linux box without Node, take the `curl` line.
 
 The JSON carries the **verdict**, not just the readings — the same three words
 the report prints, so a monitor never has to re-derive the thresholds and drift

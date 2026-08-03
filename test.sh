@@ -129,6 +129,40 @@ else
   fail "a localized key is missing a locale (it would silently fall back to English)"
 fi
 
+# ── the npm channel: two files now claim the version, so something has to check
+# that they agree. A "MUST match" nobody verifies is a wish, and the way it fails
+# is quiet — npm ships 0.9.0 and `sheerstatus --version` says 0.8.0 to everyone
+# who runs it. Also guards the packaging itself: what `files` promises to ship
+# has to exist and be executable, or `npx sheerstatus` installs a broken shim.
+echo ""
+echo "▸ npm package"
+PKG="${SCRIPT_DIR}/package.json"
+if [ -f "$PKG" ]; then
+  PKG_VER="$(sed -n 's/^[[:space:]]*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$PKG" | head -1)"
+  SCRIPT_VER="$("$TARGET" --version | tr -dc '0-9.')"
+  if [ -n "$PKG_VER" ] && [ "$PKG_VER" = "$SCRIPT_VER" ]; then
+    pass "package.json version matches the script ($PKG_VER)"
+  else
+    fail "version drift: package.json says '$PKG_VER', the script says '$SCRIPT_VER'"
+  fi
+  # bin → the real file, and it must be executable: npm copies the mode bit
+  BIN_REL="$(sed -n 's/.*"sheerstatus"[[:space:]]*:[[:space:]]*"\(\.\/[^"]*\)".*/\1/p' "$PKG" | head -1)"
+  if [ -n "$BIN_REL" ] && [ -x "${SCRIPT_DIR}/${BIN_REL#./}" ]; then
+    pass "package.json bin points at an executable file ($BIN_REL)"
+  else
+    fail "package.json bin does not point at an executable file (got '$BIN_REL')"
+  fi
+  # no install-time execution: the one npm hook that runs on someone else's
+  # machine is the one this tool must never grow
+  if grep -qE '"(postinstall|preinstall|install)"[[:space:]]*:' "$PKG"; then
+    fail "package.json has an install-time script — this tool runs only when invoked"
+  else
+    pass "no install-time scripts (nothing runs until you run it)"
+  fi
+else
+  fail "package.json is missing (the npm channel is part of the product now)"
+fi
+
 # A test run changes nothing, so the closing badge is PASS, not DONE — the same
 # question the tool's own report answers: did this change the disk?
 echo ""

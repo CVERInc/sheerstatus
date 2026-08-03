@@ -1,0 +1,42 @@
+{
+  "name": "sheerstatus",
+  "version": "0.9.0",
+  "description": "The zero-daemon hardware & pre-upgrade auditor you can read — a single-file Bash script that audits RAM, swap, storage and battery health on macOS and Linux, and says what to do about it.",
+  "keywords": [
+    "hardware",
+    "battery-health",
+    "system-info",
+    "disk-usage",
+    "macos",
+    "linux",
+    "cli",
+    "audit",
+    "no-dependencies",
+    "zero-daemon"
+  ],
+  "homepage": "https://oss.cver.net/sheerstatus",
+  "bugs": "https://github.com/CVERInc/sheerstatus/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CVERInc/sheerstatus.git"
+  },
+  "license": "MIT",
+  "author": "CVER Inc.",
+  "bin": {
+    "sheerstatus": "./sheerstatus"
+  },
+  "files": [
+    "sheerstatus"
+  ],
+  "os": [
+    "darwin",
+    "linux"
+  ],
+  "scripts": {
+    "test": "./test.sh",
+    "prepublishOnly": "./test.sh"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

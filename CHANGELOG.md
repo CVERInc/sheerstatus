@@ -7,6 +7,55 @@ project adheres to [Semantic Versioning](https://semver.org/).
 Entries for 0.2.0 – 0.6.5 were reconstructed from the commit history on
 2026-07-27; the file had been left at 0.1.0 while the script reached 0.6.5.
 
+## [0.9.0]
+
+### Added — `npx sheerstatus`, which is the original idea, not a departure from it
+
+The concept was always "nothing to install." The README's Quick Start then asked
+you to `git clone` a repository and `cd` into it — which is *more* installation
+than the thing it was avoiding: a directory that stays, that you have to `git
+pull`, sitting on your disk between the two times a year you audit a machine.
+
+`npx sheerstatus` leaves nothing behind. It is the first channel that actually
+keeps the promise, and the tool it hands you is byte-for-byte the same single
+Bash file.
+
+**npm is a delivery channel here, not a dependency.** `bin` points straight at
+the script — never a JS launcher that spawns it, because "the auditor you can
+read" must not quietly come to mean reading two languages across a process
+boundary. No `dependencies`. No install-time script: `preinstall` / `install` /
+`postinstall` are the one npm hook that runs on a stranger's machine, and this
+tool's whole claim is that nothing runs until you run it. `test.sh` now fails
+the build if one ever appears.
+
+It also makes the trust story checkable by someone who has never seen the repo:
+the published bytes are readable in a browser at
+[unpkg.com/sheerstatus/sheerstatus](https://unpkg.com/sheerstatus/sheerstatus),
+versioned and immutable, with an integrity hash. A tarball on a Homebrew tap
+gives you no such thing.
+
+The single file stays canonical, and `curl` stays a first-class way to get it —
+`npx` needs Node, and the Linux servers this audits often have none.
+
+### Added — the version is now checked in two places, so it can't drift in one
+
+`package.json` and the script both carry the version. A "these must match" that
+nothing verifies is a wish, and it fails quietly: npm serves 0.9.0 while
+`sheerstatus --version` tells every user 0.8.0. `test.sh` compares them, and
+also checks that what `files` promises to ship exists and is executable — an
+unreadable bin bit is a broken `npx` for everyone, discovered by strangers.
+
+### Fixed — the agent guide had rotted against the tool
+
+`AGENTS.md` said **macOS only** while the script had grown a full Linux path
+(`/proc`, `/sys`, and the `type=Battery` scan that reads a PineNote's
+`rk817-battery` where a hardcoded `BAT*` prefix finds nothing), and described
+the verdicts as `🟢/🟡/🔴` when the tool prints `[ PASS ]` / `[ WARN ]` /
+`[ CRIT ]` and has for six versions. Both statements were true once. A stale
+guide reads exactly like a current one — and this one was about to be handed a
+`package.json` declaring `"os": ["darwin", "linux"]`, which would have made the
+repo contradict itself in a file npm publishes.
+
 ## [0.8.0]
 
 ### Added — `--json` carries the verdict
