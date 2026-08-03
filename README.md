@@ -53,6 +53,12 @@ npx sheerstatus
 npx sheerstatus --json
 ```
 
+On a Mac you'd rather keep it around on, there's a tap:
+
+```bash
+brew install CVERInc/sheerstatus/sheerstatus
+```
+
 Or take the file itself — no package manager involved, nothing left behind but
 the one script you can read:
 
