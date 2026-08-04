@@ -200,6 +200,16 @@ vm_case "no headroom signal + swap 0 → pass" pass verdict_memory_both 0 16384 
 # A tier that can be reached is worth more than a tier that is merely defined:
 # the three above are the three the PineNote can actually pass through.
 
+# (specs) the mount label exists to stop one partition being reported as the
+# machine's storage — but only where there is something to disambiguate. With /
+# and $HOME on the same device (every Mac, and most Linux boxes) it must stay
+# silent, or every single-volume machine grows a suffix that says nothing.
+if [ -z "$(HOME=/ get_mount_label)" ]; then
+  pass "mount label is silent when / and \$HOME are the same filesystem"
+else
+  fail "mount label spoke up on a single-filesystem machine: '$(HOME=/ get_mount_label)'"
+fi
+
 # A test run changes nothing, so the closing badge is PASS, not DONE — the same
 # question the tool's own report answers: did this change the disk?
 echo ""

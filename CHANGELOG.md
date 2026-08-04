@@ -7,6 +7,24 @@ project adheres to [Semantic Versioning](https://semver.org/).
 Entries for 0.2.0 – 0.6.5 were reconstructed from the commit history on
 2026-07-27; the file had been left at 0.1.0 while the script reached 0.6.5.
 
+## [0.10.1]
+
+### Fixed — one partition was reported as the whole machine
+
+`System Specs: Pine64 PineNote v1.2 (RAM 3 GB · Storage 15 GB)` — on a device
+with 115 GB. The storage figures follow the **tightest** local filesystem, which
+is the right thing to verdict on (that PineNote's `/` has 7.8 GB left while its
+`/home` has 73), but the specs line presents its number as a property of the
+machine. Measurement of a partition, printed as a fact about hardware.
+
+The mount is named when there is more than one local filesystem to confuse it
+with: `Storage 15 GB (/)`. Nothing is added on a machine where `/` and `$HOME`
+share a device — every Mac, and most Linux boxes — because a suffix that never
+varies is noise, and a test holds that line.
+
+`--json` is untouched: `ssd` stays a bare size, so it and `disk_used_pct` still
+describe the same filesystem.
+
 ## [0.10.0]
 
 ### Fixed — on a machine that cannot swap, the RAM verdict could only ever say PASS

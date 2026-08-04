@@ -11,7 +11,7 @@
 #
 set -u
 
-VERSION="0.10.0"
+VERSION="0.10.1"
 
 # ============================================================================
 # i18n — en-US · ja-JP · zh-TW · zh-Hans · ko-KR · es-ES · de-DE · fr-FR · pt-BR.
@@ -564,6 +564,28 @@ get_ram_mb() {
   fi
 }
 
+# Which filesystem the storage figures are about — but only when saying so
+# changes anything.
+#
+# On Linux the target is the TIGHTEST local filesystem, and verdicting on that is
+# right: it is the one that will actually fill up (the PineNote's / has 7.8 GB
+# left while its /home has 73). But the specs line then read
+# "Storage 15 GB" about a 115 GB device — a claim about the MACHINE, made from a
+# measurement of one partition. Naming the mount turns it back into a true
+# sentence without inventing a second number for people to reconcile.
+#
+# Empty when / and $HOME are the same device (most machines, and every Mac):
+# there is nothing to disambiguate, and a suffix would just be noise.
+get_mount_label() {
+  [ "$(uname)" = "Darwin" ] && return 0
+  local rd hd
+  rd="$(df -P "/" 2>/dev/null | awk 'NR==2 {print $1}')"
+  hd="$(df -P "${HOME:-/}" 2>/dev/null | awk 'NR==2 {print $1}')"
+  [ -z "$rd" ] || [ -z "$hd" ] && return 0
+  [ "$rd" = "$hd" ] && return 0
+  printf ' (%s)' "${1:-$(get_target_mount)}"
+}
+
 get_ssd_size() {
   local mount_path="${1:-$(get_target_mount)}"
   local kb gb
@@ -1038,7 +1060,7 @@ run_audit() {
   # Single Block Flush Output
   {
     t banner_title
-    pad_row "$(t sec_header)" "${chip} ($(t name_memory) ${ram} · $(t name_storage) ${ssd})"
+    pad_row "$(t sec_header)" "${chip} ($(t name_memory) ${ram} · $(t name_storage) ${ssd}$(get_mount_label "$target_mount"))"
     echo ""
     sec "$(t sec_storage)"
     pad_row "$(t label_storage_usage)" "${disk_fmt}"
