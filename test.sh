@@ -163,6 +163,43 @@ else
   fail "package.json is missing (the npm channel is part of the product now)"
 fi
 
+# ── the headroom verdict ─────────────────────────────────────────────────────
+# Why these exist: sheerstatus printed [ PASS ] RAM: Ample (Swap 0 B) on a machine
+# with 3.6 GB, no swap and no cushion — the PineNote, whose kernel is built with
+# `CONFIG_SWAP is not set`. SwapTotal there is 0 for a structural reason, so the
+# only signal the verdict read could never move. A gauge welded to green.
+echo ""
+echo "▸ memory verdict"
+# shellcheck source=/dev/null
+SHEERSTATUS_LIB=1 . "$TARGET"
+
+vm_case() {   # $1 label · $2 expected · $3… args to the function under test
+  local label="$1" want="$2" got; shift 2
+  got="$("$@")"
+  if [ "$got" = "$want" ]; then pass "$label"; else fail "$label — got '$got', want '$want'"; fi
+}
+
+vm_case "headroom 83% → pass"  pass    verdict_memory_avail 83
+vm_case "headroom 25% → pass"  pass    verdict_memory_avail 25
+vm_case "headroom 24% → warn"  warn    verdict_memory_avail 24
+vm_case "headroom 10% → warn"  warn    verdict_memory_avail 10
+vm_case "headroom 9%  → crit"  crit    verdict_memory_avail 9
+vm_case "no such signal (macOS) → unknown" unknown verdict_memory_avail ""
+
+# THE regression: swap says nothing (it cannot), headroom says the machine is
+# nearly out. Before this existed the answer was 'pass'.
+vm_case "swap 0 + headroom 5% → crit (the welded-gauge case)" crit \
+        verdict_memory_both 0 3724 5
+# and the reverse road: headroom fine, swap already being paid for
+vm_case "swap 7700 MB + headroom 60% → crit" crit verdict_memory_both 7700 16384 60
+# neither instrument alarmed
+vm_case "swap 0 + headroom 80% → pass" pass verdict_memory_both 0 3724 80
+# a machine with no MemAvailable at all must fall back to the swap reading only
+vm_case "no headroom signal + swap 0 → pass" pass verdict_memory_both 0 16384 ""
+
+# A tier that can be reached is worth more than a tier that is merely defined:
+# the three above are the three the PineNote can actually pass through.
+
 # A test run changes nothing, so the closing badge is PASS, not DONE — the same
 # question the tool's own report answers: did this change the disk?
 echo ""

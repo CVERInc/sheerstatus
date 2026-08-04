@@ -1,6 +1,6 @@
 {
   "name": "sheerstatus",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "description": "The zero-daemon hardware & pre-upgrade auditor you can read — a single-file Bash script that audits RAM, swap, storage and battery health on macOS and Linux, and says what to do about it.",
   "keywords": [
     "hardware",

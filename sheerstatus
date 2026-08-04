@@ -11,7 +11,7 @@
 #
 set -u
 
-VERSION="0.9.0"
+VERSION="0.10.0"
 
 # ============================================================================
 # i18n — en-US · ja-JP · zh-TW · zh-Hans · ko-KR · es-ES · de-DE · fr-FR · pt-BR.
@@ -264,6 +264,54 @@ t() {
         fr-FR) echo "Un recours intensif à la mémoire virtuelle abrège la vie du disque (swap {v})." ;;
         pt-BR) echo "O uso intenso de memória virtual reduz a vida útil do disco (swap {v})." ;;
         en-US|*)     echo "Heavy virtual memory thrashing will degrade disk lifespan (Swap {v})." ;;
+      esac ;;
+    vd_mem_pass_avail)   # {v} — headroom wording; swap-neutral so it stays true on both kinds of machine
+      case "$SS_LANG" in
+        ja-JP) echo "十分な余裕（まだ {v} を確保できます）。" ;;
+        zh-TW) echo "餘裕充足（還有 {v} 配得出來）。" ;;
+        zh-Hans) echo "余量充足（还有 {v} 配得出来）。" ;;
+        ko-KR) echo "여유 충분 (아직 {v}를 할당할 수 있음)." ;;
+        es-ES) echo "Margen holgado (todavía se puede asignar {v})." ;;
+        de-DE) echo "Reichlich Spielraum (noch {v} belegbar)." ;;
+        fr-FR) echo "Marge confortable ({v} encore allouables)." ;;
+        pt-BR) echo "Folga ampla (ainda dá para alocar {v})." ;;
+        en-US|*)     echo "Ample headroom ({v} of RAM still allocatable)." ;;
+      esac ;;
+    vd_mem_warn_avail)   # {v}
+      case "$SS_LANG" in
+        ja-JP) echo "余裕が薄くなっています（確保できるのは残り {v}）。" ;;
+        zh-TW) echo "餘裕在變薄（只剩 {v} 配得出來）。" ;;
+        zh-Hans) echo "余量在变薄（只剩 {v} 配得出来）。" ;;
+        ko-KR) echo "여유가 줄고 있음 (할당 가능한 것은 {v}뿐)." ;;
+        es-ES) echo "Queda poco margen (solo {v} sigue siendo asignable)." ;;
+        de-DE) echo "Der Spielraum wird knapp (nur noch {v} belegbar)." ;;
+        fr-FR) echo "La marge se réduit (seuls {v} restent allouables)." ;;
+        pt-BR) echo "A folga está diminuindo (só {v} ainda é alocável)." ;;
+        en-US|*)     echo "Headroom is thinning (only {v} of RAM still allocatable)." ;;
+      esac ;;
+    vd_mem_crit_avail)   # {v}
+      case "$SS_LANG" in
+        ja-JP) echo "余裕がほとんどありません（確保できるのは残り {v} だけ）。" ;;
+        zh-TW) echo "幾乎沒有餘裕了（只剩 {v} 配得出來）。" ;;
+        zh-Hans) echo "几乎没有余量了（只剩 {v} 配得出来）。" ;;
+        ko-KR) echo "여유가 거의 없음 (할당 가능한 것은 {v}뿐)." ;;
+        es-ES) echo "Casi sin margen (solo {v} sigue siendo asignable)." ;;
+        de-DE) echo "Kaum noch Spielraum (nur noch {v} belegbar)." ;;
+        fr-FR) echo "Presque plus de marge (seuls {v} restent allouables)." ;;
+        pt-BR) echo "Quase sem folga (só {v} ainda é alocável)." ;;
+        en-US|*)     echo "Almost no headroom (only {v} of RAM still allocatable)." ;;
+      esac ;;
+    vd_mem_noswap)   # appended when the kernel has no swap at all — names the failure mode
+      case "$SS_LANG" in
+        ja-JP) echo "このカーネルには swap がないため、行き着く先は速度低下ではなくプロセスの強制終了です。" ;;
+        zh-TW) echo "這顆核心沒有 swap，所以壓力的結局是行程被殺，不是變慢。" ;;
+        zh-Hans) echo "这颗内核没有 swap，所以压力的结局是进程被杀，不是变慢。" ;;
+        ko-KR) echo " 이 커널에는 swap이 없어서, 끝은 속도 저하가 아니라 프로세스 강제 종료입니다." ;;
+        es-ES) echo " Este kernel no tiene swap: la presión acaba en un proceso eliminado, no en lentitud." ;;
+        de-DE) echo " Dieser Kernel hat keinen Swap: Druck endet in einem beendeten Prozess, nicht in Langsamkeit." ;;
+        fr-FR) echo " Ce noyau n’a pas de swap : la pression finit par un processus tué, pas par un ralentissement." ;;
+        pt-BR) echo " Este kernel não tem swap: a pressão termina com um processo morto, não com lentidão." ;;
+        en-US|*)     echo " This kernel has no swap, so pressure ends in a killed process, not a slowdown." ;;
       esac ;;
     vd_ssd_pass)   # {v}
       case "$SS_LANG" in
@@ -779,6 +827,30 @@ get_swap_used_mb() {
   fi
 }
 
+# How much of RAM the kernel says it can still hand out WITHOUT swapping.
+#
+# Linux only, and it exists because swap-used is not a universal signal: the
+# PineNote's kernel is built with `CONFIG_SWAP is not set`, so SwapTotal is 0
+# for a STRUCTURAL reason and can never move. Reading that 0 as "ample" printed
+# [ PASS ] on a 3.6 GB machine with no cushion at all — a gauge whose needle is
+# welded to green. MemAvailable is the kernel's own estimate and it stays honest
+# whether or not swap exists.
+#
+# Empty on macOS: there the compressor+swap pair is the instrument, and inventing
+# a number here would be worse than admitting the signal is platform-specific.
+get_mem_avail_pct() {
+  [ "$(uname)" = "Darwin" ] && return 0
+  awk '/MemTotal:/{t=$2} /MemAvailable:/{a=$2} END{if (t>0 && a>0) printf "%d", a*100/t}' /proc/meminfo 2>/dev/null
+}
+
+# Does this kernel have a swap subsystem at all? (macOS always does.)
+get_has_swap() {
+  if [ "$(uname)" = "Darwin" ]; then echo 1; return 0; fi
+  local st_kb
+  st_kb="$(awk '/SwapTotal:/ {print $2}' /proc/meminfo 2>/dev/null || echo 0)"
+  if [ "${st_kb:-0}" -gt 0 ]; then echo 1; else echo 0; fi
+}
+
 # --- Audit Verdict Builder ---
 
 # --- Verdict, decided once ---------------------------------------------------
@@ -801,6 +873,30 @@ verdict_memory() {   # $1 = swap MB  $2 = total RAM MB
   fi
 }
 
+# The headroom tier. Thresholds are about what is left, not what was spent —
+# which is why this one works on a machine that cannot spend swap at all.
+verdict_memory_avail() {   # $1 = MemAvailable as % of MemTotal ("" = no such signal here)
+  case "${1:-}" in ''|*[!0-9]*) echo unknown; return 0 ;; esac
+  if   [ "$1" -ge 25 ]; then echo pass
+  elif [ "$1" -ge 10 ]; then echo warn
+  else                       echo crit
+  fi
+}
+
+verdict_rank() {   # for comparing two tiers; unknown ranks below pass so it never wins
+  case "$1" in pass) echo 1 ;; warn) echo 2 ;; crit) echo 3 ;; *) echo 0 ;; esac
+}
+
+# Two instruments, one answer: whichever says worse. A machine can be in trouble
+# by either road — already paying for swap, or about to run out with none — and
+# claiming the better of the two would be picking the flattering gauge.
+verdict_memory_both() {   # $1 = swap MB  $2 = ram MB  $3 = avail % (may be empty)
+  local a b
+  a="$(verdict_memory "$1" "$2")"
+  b="$(verdict_memory_avail "${3:-}")"
+  if [ "$(verdict_rank "$b")" -gt "$(verdict_rank "$a")" ]; then echo "$b"; else echo "$a"; fi
+}
+
 verdict_storage() {   # $1 = used %
   if   [ "$1" -lt 85 ]; then echo pass
   elif [ "$1" -lt 95 ]; then echo warn
@@ -817,17 +913,38 @@ verdict_battery() {   # $1 = health % (or N/A)
 }
 
 build_verdict_line_memory() {
-  local swap_mb swap_fmt ram_mb m b
+  local swap_mb ram_mb avail has_swap v v_swap v_avail m b val
   swap_mb="$1"
   ram_mb="$2"
-  swap_fmt="$(get_swap_formatted)"
+  avail="$(get_mem_avail_pct)"
+  has_swap="$(get_has_swap)"
 
-  case "$(verdict_memory "$swap_mb" "$ram_mb")" in
-    pass) m="$(t vd_mem_pass)"; b="$(t tag_pass)" ;;
-    warn) m="$(t vd_mem_warn)"; b="$(t tag_warn)" ;;
-    *)    m="$(t vd_mem_crit)"; b="$(t tag_crit)" ;;
-  esac
-  printf '   %s %s%s%s\n' "$b" "$(t name_memory)" "$(t sep_colon)" "${m//\{v\}/$swap_fmt}"
+  v_swap="$(verdict_memory "$swap_mb" "$ram_mb")"
+  v_avail="$(verdict_memory_avail "$avail")"
+  v="$(verdict_memory_both "$swap_mb" "$ram_mb" "$avail")"
+
+  # WHICH sentence: the one that belongs to the instrument that saw the trouble.
+  # A machine with no swap must never be described in swap words — "started using
+  # disk as virtual memory" is not a thing it can do — and a swap machine whose
+  # headroom is the worse reading must not be summarised as "Ample (Swap 0 B)".
+  if [ "$has_swap" -eq 0 ] || [ "$(verdict_rank "$v_avail")" -gt "$(verdict_rank "$v_swap")" ]; then
+    val="${avail}%"
+    case "$v" in
+      pass) m="$(t vd_mem_pass_avail)"; b="$(t tag_pass)" ;;
+      warn) m="$(t vd_mem_warn_avail)"; b="$(t tag_warn)" ;;
+      *)    m="$(t vd_mem_crit_avail)"; b="$(t tag_crit)" ;;
+    esac
+    # the cliff is only worth naming when there is one and you are near it
+    [ "$has_swap" -eq 0 ] && [ "$v" != "pass" ] && m="${m}$(t vd_mem_noswap)"
+  else
+    val="$(get_swap_formatted)"
+    case "$v" in
+      pass) m="$(t vd_mem_pass)"; b="$(t tag_pass)" ;;
+      warn) m="$(t vd_mem_warn)"; b="$(t tag_warn)" ;;
+      *)    m="$(t vd_mem_crit)"; b="$(t tag_crit)" ;;
+    esac
+  fi
+  printf '   %s %s%s%s\n' "$b" "$(t name_memory)" "$(t sep_colon)" "${m//\{v\}/$val}"
 }
 
 build_verdict_line_storage() {
@@ -867,7 +984,9 @@ build_consolidated_recommendation() {
   [ "$pass_threshold" -lt 200 ] && pass_threshold=200
 
   local need_ram=0 need_ssd=0 need_bat=0
-  [ "$swap_mb" -ge "$pass_threshold" ] && need_ram=1
+  # Either instrument can call for more RAM: swap already being paid for, or
+  # headroom running out with no swap to pay with.
+  [ "$(verdict_memory_both "$swap_mb" "$ram_mb" "$(get_mem_avail_pct)")" != "pass" ] && need_ram=1
   [ "$disk_pct" -ge 85 ] && need_ssd=1
   [ "$bat_pct" -lt 80 ] && need_bat=1
 
@@ -991,13 +1110,14 @@ run_json() {
   "ram": "${json_ram}",
   "ssd": "${json_ssd}",
   "swap_used_mb": $(jnum "$swap_used_mb"),
+  "mem_available_pct": $(jnum "$(get_mem_avail_pct)"),
   "disk_used_pct": $(jnum "$disk_pct_num"),
   "battery_health_pct": $(jnum "$bat_pct_num"),
   "temp_live_c": $(jnum "$temp_live"),
   "temp_avg_c": $(jnum "$temp_avg"),
   "temp_max_c": $(jnum "$temp_max"),
   "verdict": {
-    "memory": "$(verdict_memory "$swap_used_mb" "$(get_ram_mb)")",
+    "memory": "$(verdict_memory_both "$swap_used_mb" "$(get_ram_mb)" "$(get_mem_avail_pct)")",
     "storage": "$(verdict_storage "$disk_pct_num")",
     "battery": "$(verdict_battery "$bat_pct_num")"
   }
@@ -1006,6 +1126,13 @@ EOF
 }
 
 # CLI Router
+# Sourced as a library for tests (SHEERSTATUS_LIB=1): every function above is
+# defined, and nothing runs. The sibling carries the same guard, for the same
+# reason — a verdict you cannot call directly is a verdict you can only test by
+# owning a machine that happens to be in the tier you want to check.
+# shellcheck disable=SC2317  # the exit is reached only when run (not sourced) under the flag
+if [ -n "${SHEERSTATUS_LIB:-}" ]; then return 0 2>/dev/null || exit 0; fi
+
 case "${1:-}" in
   --json)
     run_json

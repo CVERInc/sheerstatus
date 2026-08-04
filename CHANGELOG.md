@@ -7,6 +7,56 @@ project adheres to [Semantic Versioning](https://semver.org/).
 Entries for 0.2.0 – 0.6.5 were reconstructed from the commit history on
 2026-07-27; the file had been left at 0.1.0 while the script reached 0.6.5.
 
+## [0.10.0]
+
+### Fixed — on a machine that cannot swap, the RAM verdict could only ever say PASS
+
+`verdict_memory` read exactly one number: swap in use. The PineNote's kernel is
+built with `CONFIG_SWAP is not set` — no swap subsystem at all, which is why
+`swapon` returns 255 there and a swapfile is as impossible as zram. `SwapTotal`
+is 0 for a **structural** reason, so it can never move, and reading that 0 as
+"ample" printed this on a 3.6 GB machine with no cushion whatsoever:
+
+```
+[ PASS ] RAM: Ample (Swap 0 B).
+```
+
+It would have printed the same line with 50 MB left and the OOM killer one
+allocation away. A gauge whose needle is welded to green is not a gauge.
+
+Linux now also reads **`MemAvailable`** — the kernel's own estimate of what it
+can still hand out without swapping, which is the one figure that stays honest
+whether or not swap exists. Both instruments are consulted and **the worse answer
+wins**: a machine is in trouble by either road — already paying for swap, or
+about to run out with none — and reporting the flattering one is how this bug
+happened in the first place.
+
+The sentence follows the instrument that saw the trouble, because the old words
+are false on such a machine: "started using disk as virtual memory" is not
+something a kernel without swap can do. And when there is no swap at all, the
+verdict names the consequence, since it differs from every other machine this
+tool runs on:
+
+```
+[ CRIT ] RAM: Almost no headroom (only 5% of RAM still allocatable). This kernel
+         has no swap, so pressure ends in a killed process, not a slowdown.
+```
+
+macOS is untouched — there the compressor/swap pair is the right instrument, and
+`mem_available_pct` is `null` rather than a number invented to fill the column.
+
+### Added — `--json` carries `mem_available_pct`, and the script can be sourced
+
+The new reading joins the payload, `null` where the platform has no such figure.
+And `SHEERSTATUS_LIB=1` now loads the script as a library without running the
+audit, which is what let the tiers be tested at all: a verdict you can only reach
+by owning a machine that happens to be in the tier you want to check is a verdict
+nobody tests. Ten cases now cover the tiers in both directions, including the
+exact welded-gauge case — swap silent, headroom at 5%, answer `crit`.
+
+*Found by running 0.9.0 on the PineNote itself — the machine whose `rk817-battery`
+is the reason the Linux path exists.*
+
 ## [0.9.0]
 
 ### Added — `npx sheerstatus`, which is the original idea, not a departure from it
