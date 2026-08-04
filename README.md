@@ -82,6 +82,7 @@ from the tool about the same machine:
 ```json
 {
   "swap_used_mb": 2889,
+  "mem_available_pct": null,
   "disk_used_pct": 93,
   "battery_health_pct": 89,
   "verdict": { "memory": "warn", "storage": "warn", "battery": "pass" }
@@ -91,6 +92,14 @@ from the tool about the same machine:
 A reading this machine can't take is `null`, never the string `"N/A"` — a
 consumer doing arithmetic on `"N/A"` gets a silent zero. A battery with no
 reading verdicts as `"unknown"` rather than being guessed at or omitted.
+`mem_available_pct` is Linux-only for the same reason: it is `/proc/meminfo`'s
+own figure, and macOS has no equivalent to borrow.
+
+**Two instruments, worse answer wins.** Swap in use says you are already paying;
+`MemAvailable` says how much is left to hand out. A kernel built without swap —
+the PineNote's is — pins the first at zero forever, so a verdict that reads only
+that can never leave `pass`. Both are consulted, and the memory verdict follows
+whichever one saw the trouble.
 
 ---
 
