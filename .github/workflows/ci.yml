@@ -25,9 +25,14 @@ jobs:
       - name: Syntax check
         run: bash -n sheerstatus && bash -n test.sh
 
+      # Pinned to a commit, not `main`: a lint fetched from a moving branch can turn
+      # this job red (or quietly lenient) with no change here, and no rerun of an
+      # old commit reproduces what it saw. Bump the SHA deliberately.
       - name: Signet (CLI) — one language across the family
+        env:
+          SIGNET_REF: 10090d4c7b0437e1f46fe5e2b1ba85e772b8b7fa
         run: |
-          curl -fsSL https://raw.githubusercontent.com/CVERInc/signet/main/packages/cli/lint.sh -o /tmp/signet-cli-lint
+          curl -fsSL "https://raw.githubusercontent.com/CVERInc/signet/${SIGNET_REF}/packages/cli/lint.sh" -o /tmp/signet-cli-lint
           bash /tmp/signet-cli-lint sheerstatus test.sh
 
       - name: CHANGELOG has an entry for the script version
