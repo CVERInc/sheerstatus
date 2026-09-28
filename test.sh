@@ -39,6 +39,25 @@ case "$HELP_OUTPUT" in
   *) fail "--help output invalid" ;;
 esac
 
+# Test 3b: the router accepts -v and -h, so the help has to say so
+# (as words of their own — "-v" is a substring of "--version")
+for short in -v -h; do
+  printf '%s\n' "$HELP_OUTPUT" | grep -qE -- "(^|[ ,|(])${short}([ ,|)]|\$)" \
+    || fail "--help does not mention $short, which the router accepts"
+done
+pass "--help lists the -v and -h short flags"
+
+# Test 3c: an unknown argument is an error, not a silent full report. A typo'd
+# `--jsno` in a pipeline used to get human text and exit 0.
+set +e
+BOGUS_OUT="$("$TARGET" --jsno 2>/dev/null)"; BOGUS_RC=$?
+set -e
+if [ "$BOGUS_RC" -ne 0 ] && [ -z "$BOGUS_OUT" ]; then
+  pass "unknown argument exits non-zero with nothing on stdout (rc $BOGUS_RC)"
+else
+  fail "unknown argument --jsno: rc $BOGUS_RC, stdout '${BOGUS_OUT%%$'\n'*}…'"
+fi
+
 # Test 4: JSON output
 #
 # Asserting on `"version":` only proved the heredoc ran. What a consumer comes
@@ -56,12 +75,39 @@ done
 case "$JSON_OUTPUT" in
   *'"N/A"'*) fail "--json emits the string \"N/A\" where a number or null belongs" ;;
 esac
-# every verdict must be one of the closed set
-if printf '%s' "$JSON_OUTPUT" | tr -d ' \n' | grep -qE '"(memory|storage|battery)":"(pass|warn|crit|unknown)"'; then
-  pass "--json carries the verdict, and readings are numbers or null"
-else
-  fail "--json verdict is not one of pass/warn/crit/unknown: ${JSON_OUTPUT}"
-fi
+# every verdict must be one of the closed set — EACH one. A single grep over the
+# whole object passed as soon as any one key matched, so `"battery": "N/A"`
+# beside a valid memory verdict sailed through.
+JSON_FLAT="$(printf '%s' "$JSON_OUTPUT" | tr -d ' \n')"
+json_verdict() { printf '%s' "$JSON_FLAT" | grep -oE "\"$1\":\"[^\"]*\"" | tail -1 | cut -d'"' -f4; }
+for key in memory storage battery; do
+  case "$(json_verdict "$key")" in
+    pass|warn|crit|unknown) : ;;
+    *) fail "--json verdict.$key is not one of pass/warn/crit/unknown: '$(json_verdict "$key")'" ;;
+  esac
+done
+pass "--json carries the verdict, and readings are numbers or null"
+
+# The report and --json must tell the same story. Each JSON verdict has exactly
+# one report line with the same badge — and `unknown` has none, because a reading
+# this machine can't take is omitted, not guessed at. This machine's own state is
+# whatever it is; the stubbed cases further down pin the no-battery branch.
+REPORT_EN="$(SHEERSTATUS_LANG=en-US "$TARGET")"
+for pair in memory:RAM storage:Storage battery:Battery; do
+  key="${pair%%:*}"; label="${pair#*:}"
+  lines="$(printf '%s\n' "$REPORT_EN" | grep -E "^   \[ (PASS|WARN|CRIT) \] ${label}:" || true)"
+  jv="$(json_verdict "$key")"
+  if [ "$jv" = unknown ]; then
+    [ -z "$lines" ] || fail "--json says $key is unknown, the report still verdicts it: $lines"
+  else
+    want="[ $(printf '%s' "$jv" | tr '[:lower:]' '[:upper:]') ]"
+    case "$lines" in
+      *"$want"*) : ;;
+      *) fail "report and --json disagree on $key: json '$jv', report '${lines}'" ;;
+    esac
+  fi
+done
+pass "the report's verdict lines agree with --json (unknown prints no line)"
 
 # Test 5: 9-locale sweep
 LOCALES=("en-US" "ja-JP" "zh-TW" "zh-Hans" "ko-KR" "es-ES" "de-DE" "fr-FR" "pt-BR")
@@ -70,10 +116,13 @@ echo ""
 echo "▸ Locale sweep"
 for lang in "${LOCALES[@]}"; do
   out="$(SHEERSTATUS_LANG="$lang" "$TARGET")"
-  case "$out" in
-    *sheerstatus*) pass "$lang" ;;
-    *) fail "Locale sweep failed for $lang" ;;
-  esac
+  # "the word sheerstatus appears" is true of any output at all; ask for a
+  # verdict, and for no placeholder reading leaking into the text
+  case "$out" in *sheerstatus*) : ;; *) fail "Locale sweep failed for $lang" ;; esac
+  printf '%s\n' "$out" | grep -qE '^   \[ (PASS|WARN|CRIT) \] ' \
+    || fail "$lang printed no verdict line"
+  case "$out" in *N/A*) fail "$lang printed an N/A reading: $(printf '%s\n' "$out" | grep 'N/A')" ;; esac
+  pass "$lang"
 done
 
 # Test 6: every localized t() key must name every locale
@@ -204,11 +253,69 @@ vm_case "no headroom signal + swap 0 → pass" pass verdict_memory_both 0 16384 
 # machine's storage — but only where there is something to disambiguate. With /
 # and $HOME on the same device (every Mac, and most Linux boxes) it must stay
 # silent, or every single-volume machine grows a suffix that says nothing.
-if [ -z "$(HOME=/ get_mount_label)" ]; then
-  pass "mount label is silent when / and \$HOME are the same filesystem"
+#
+# df is stubbed so both branches are reached on any runner: with the real df,
+# HOME=/ makes the two lookups identical by construction and only the early
+# return is ever exercised.
+fake_df() {   # $1 = device for /  $2 = device for /home
+  eval "df() {
+    local last=\"\${!#}\"
+    echo 'Filesystem 1024-blocks Used Available Capacity Mounted on'
+    case \"\$last\" in
+      /home*) echo '$2 100 50 50 50% /home' ;;
+      *)      echo '$1 100 50 50 50% /' ;;
+    esac
+  }"
+}
+if [ "$(uname)" = "Darwin" ]; then
+  # the label is Linux-only by design (a Mac's data volume is the whole story)
+  [ -z "$(get_mount_label /)" ] || fail "mount label spoke up on macOS"
+  pass "mount label is silent on macOS"
 else
-  fail "mount label spoke up on a single-filesystem machine: '$(HOME=/ get_mount_label)'"
+  got="$(fake_df /dev/sda1 /dev/sda1; HOME=/home/u get_mount_label /)"
+  if [ -z "$got" ]; then
+    pass "mount label is silent when / and \$HOME are the same filesystem"
+  else
+    fail "mount label spoke up on a single-filesystem machine: '$got'"
+  fi
+  got="$(fake_df /dev/sda1 /dev/sda2; HOME=/home/u get_mount_label /)"
+  if [ "$got" = " (/)" ]; then
+    pass "mount label names the mount when / and \$HOME are different filesystems"
+  else
+    fail "mount label with / and \$HOME on different devices — got '$got', want ' (/)'"
+  fi
 fi
+
+# ── the battery verdict ─────────────────────────────────────────────────────
+# A machine with no battery printed `[ CRIT ] Battery: Health severely degraded
+# (N/A%).` — in all nine languages, on every CI runner (they are VMs), while
+# --json said "unknown" and the recommendation said "excellent condition". The
+# getters are stubbed so both roads are reached whatever this machine has.
+echo ""
+echo "▸ battery verdict"
+# shellcheck disable=SC2317,SC2034  # the stub and SS_LANG are read by run_audit
+audit_with_battery() {   # $1 = what get_battery_pct reports · $2 = locale
+  ( STUB_BAT="$1"; SS_LANG="$2"; get_battery_pct() { echo "$STUB_BAT"; }; run_audit )
+}
+badge_lines() { printf '%s\n' "$1" | grep -cE '^   \[ (PASS|WARN|CRIT) \] ' || true; }
+for lang in "${LOCALES[@]}"; do
+  out="$(audit_with_battery N/A "$lang")"
+  n="$(badge_lines "$out")"
+  case "$out" in *N/A*) fail "$lang: no battery, but the report prints N/A: $(printf '%s\n' "$out" | grep 'N/A')" ;; esac
+  [ "$n" -eq 2 ] || fail "$lang: no battery should leave 2 verdict lines (RAM, storage), got $n"
+done
+pass "no battery → no battery verdict line, in all ${#LOCALES[@]} locales"
+
+out="$(audit_with_battery 75% en-US)"
+printf '%s\n' "$out" | grep -qE '^   \[ WARN \] Battery: .*75%' \
+  || fail "battery 75% should print a WARN battery line: $out"
+case "$out" in *"$(SS_LANG=en-US t rec_battery)"*) : ;; *) fail "battery 75% should recommend a battery service" ;; esac
+pass "battery 75% → WARN line, and the recommendation names the battery"
+
+out="$(audit_with_battery 92% en-US)"
+printf '%s\n' "$out" | grep -qE '^   \[ PASS \] Battery: .*92%' \
+  || fail "battery 92% should print a PASS battery line: $out"
+pass "battery 92% → PASS line"
 
 # A test run changes nothing, so the closing badge is PASS, not DONE — the same
 # question the tool's own report answers: did this change the disk?

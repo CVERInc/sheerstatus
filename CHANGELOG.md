@@ -7,6 +7,34 @@ project adheres to [Semantic Versioning](https://semver.org/).
 Entries for 0.2.0 – 0.6.5 were reconstructed from the commit history on
 2026-07-27; the file had been left at 0.1.0 while the script reached 0.6.5.
 
+## [Unreleased]
+
+### Fixed — a machine with no battery was told its battery was critical
+
+`[ CRIT ] Battery: Health severely degraded (N/A%).` — on every Mac mini,
+Linux server and CI runner, in all nine languages, while `--json` on the same
+machine said `"battery": "unknown"` and the recommendation below it said
+"excellent condition". `unknown` fell through to the CRIT branch, and the line
+was printed unconditionally. The report now omits the battery verdict when there
+is no reading, as the README already promised.
+
+The recommendation now asks `verdict_storage` / `verdict_battery` instead of
+restating their thresholds, so it can no longer treat a missing battery as 100%.
+
+### Changed
+
+- An unknown argument (`--jsno`) now prints an error to stderr and exits `2`,
+  instead of silently running the human-readable report with exit 0.
+- `--help` lists the `-v` and `-h` short flags the router already accepted.
+
+### CI
+
+- The signet lint is fetched from a pinned commit instead of `main`.
+- `test.sh` checks each `--json` verdict key on its own (one valid key used to
+  pass the whole object), asserts the report's verdict lines agree with
+  `--json`, exercises the no-battery and with-battery report paths with stubbed
+  getters in all locales, and reaches both branches of the mount label.
+
 ## [0.10.1]
 
 ### Fixed — one partition was reported as the whole machine

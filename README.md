@@ -109,8 +109,11 @@ whichever one saw the trouble.
 | :--- | :--- |
 | `sheerstatus` | Print human-readable 3-pillar hardware health & audit verdict |
 | `sheerstatus --json` | The same audit as JSON — readings **and the verdict** |
-| `sheerstatus --version` | Output version string |
-| `sheerstatus --help` | Output usage instructions |
+| `sheerstatus --version`, `-v` | Output version string |
+| `sheerstatus --help`, `-h` | Output usage instructions |
+
+Any other argument is an error: it prints a message to stderr and exits `2`,
+rather than running the human-readable report under a mistyped `--json`.
 
 ---
 

@@ -999,7 +999,6 @@ build_consolidated_recommendation() {
   disk_pct="$2"
   bat_pct="$3"
   ram_mb="$4"
-  [ -z "$bat_pct" ] || [ "$bat_pct" = "N/A" ] && bat_pct=100
 
   # Future-proof ratio thresholds
   local pass_threshold=$(( ram_mb * 5 / 100 ))
@@ -1009,8 +1008,11 @@ build_consolidated_recommendation() {
   # Either instrument can call for more RAM: swap already being paid for, or
   # headroom running out with no swap to pay with.
   [ "$(verdict_memory_both "$swap_mb" "$ram_mb" "$(get_mem_avail_pct)")" != "pass" ] && need_ram=1
-  [ "$disk_pct" -ge 85 ] && need_ssd=1
-  [ "$bat_pct" -lt 80 ] && need_bat=1
+  # Ask the verdict functions rather than restating their thresholds: a copy of
+  # the battery threshold, plus "N/A counts as 100", is how this section once
+  # said "excellent condition" under a [ CRIT ] battery line. unknown is neither.
+  case "$(verdict_storage "$disk_pct")" in warn|crit) need_ssd=1 ;; esac
+  case "$(verdict_battery "$bat_pct")" in warn|crit) need_bat=1 ;; esac
 
   # One logic path, nine locales. Which sentence to say is a decision about this
   # machine; which words to say it in is a lookup. Keeping those separate is why
@@ -1031,7 +1033,7 @@ build_consolidated_recommendation() {
   fi
 
   [ "$need_bat" -eq 1 ] && echo "   · $(t rec_battery)"
-  [ "$disk_pct" -ge 85 ] && echo "   · $(t rec_sweep)"
+  [ "$need_ssd" -eq 1 ] && echo "   · $(t rec_sweep)"
   return 0
 }
 
@@ -1091,7 +1093,12 @@ run_audit() {
     sec "$(t verdict_title)"
     build_verdict_line_memory "$swap_used_mb" "$ram_mb"
     build_verdict_line_storage "$disk_pct_num"
-    build_verdict_line_battery "$bat_pct_num"
+    # No battery, no battery verdict: `unknown` is a reading this machine can't
+    # take, and --json says so as "unknown" — the report omits the line rather
+    # than letting it fall through to CRIT (N/A%).
+    if [ "$(verdict_battery "$bat_pct_num")" != "unknown" ]; then
+      build_verdict_line_battery "$bat_pct_num"
+    fi
     echo ""
     build_consolidated_recommendation "$swap_used_mb" "$disk_pct_num" "$bat_pct_num" "$ram_mb"
   }
@@ -1168,10 +1175,15 @@ case "${1:-}" in
     echo "Usage:"
     echo "  sheerstatus              Print hardware health & audit verdict"
     echo "  sheerstatus --json       Output JSON for automation"
-    echo "  sheerstatus --version    Print version"
-    echo "  sheerstatus --help       Print help"
+    echo "  sheerstatus --version    Print version (also -v)"
+    echo "  sheerstatus --help       Print help (also -h)"
+    ;;
+  "")
+    run_audit
     ;;
   *)
-    run_audit
+    # A typo'd --jsno must not hand a pipeline human text with exit 0.
+    echo "sheerstatus: unknown argument '$1' (see --help)" >&2
+    exit 2
     ;;
 esac
